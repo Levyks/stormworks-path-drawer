@@ -1,0 +1,144 @@
+<html>
+    <head>
+        <!--
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        -->
+        
+        <link rel="stylesheet" href="css/style.css"> 
+        <link rel="stylesheet" href="css/bootstrap.min.css">  
+        <script src="js/jquery-3.6.0.min.js"></script>
+        <!--<script src="js/main.js"></script>-->
+        <script src="js/main.js"></script>
+        <title>Path Drawer</title>
+    </head>
+    <body>
+        <div class="row main-row">
+            <div id="canvasWrapper" class="col-10">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+            <div class="lateral-menu col-2 d-flex flex-column">
+                <div class="row">
+                    <div class="btn-group-vertical mb-3">
+                        <button class="btn btn-primary" id="zoom-in"><b>+</b></button>
+                        <button class="btn btn-primary" id="zoom-out"><b>-</b></button>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="allow-move-div-wrapper div-section-wrapper">
+                        <div class="allow-move-div div-section">
+                            <input class="form-check-input" type="checkbox" checked id="move-cb">
+                            <label class="" for="move-cb">
+                                Allow move
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="waypoints-div-wrapper div-section-wrapper">
+                        <div class="waypoints-div div-section">
+                            <h3>Waypoints</h3>
+                            <div class="form-group mb-2">
+                                <label for="wp-distance-input">Distance between wps</label>
+                                <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters">
+                            </div> 
+                            <div class="row mb-2">
+                                <div class="btn-group-vertical">
+                                    <button class="btn d-none"></button>
+                                    <input type="text" class="form-control" id="waypoints-display" disabled value="0 Waypoints">
+                                    <button id="remove-last-btn" class="btn btn-warning">Remove Last</button>
+                                    <button id="clear-btn" class="btn btn-danger">Clear All</button>
+                                </div> 
+                            </div>
+                            <div class="row mb-2">
+                                <div class="btn-group-vertical">
+                                    <label id="wps-json-import-label" for="wps-json-input" class="btn btn-secondary">Import JSON</label>
+                                    <input type="file" id="wps-json-input" class="d-none">
+                                    <a id="wps-json-download-a" class="d-none"></a>
+                                    <button id="wps-json-download-btn" class="btn btn-secondary">Export JSON</button>  
+                                    <button id="send-btn" class="btn btn-success">Send to Server</button>
+                                </div> 
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-auto mb-2">
+                    <div class="row inner-row mb-2">
+                        <div class="btn-group-vertical">
+                            <button id="open-calibrate-modal" class="btn btn-primary">Calibrate</button>
+                            <button id="reset-btn" class="btn btn-warning">Reset Map</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modal-out-calib" class="modal-outside">
+            <div id="modal-in-calib" class="modal-inside">
+                <div class="row mb-3">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <h2 class="modal-title">Calibration</h2>
+                    </div>
+                    <div class="col-1">
+                        <div class="close-btn-div">
+                            <button type="button" class="btn-close close-modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-main">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="marker-info-wrapper">
+                                <h4>Marker A</h4>      
+                                <div class="form-group">
+                                    <input type="checkbox" class="btn-check place-marker" id="place-marker-a" key="a" autocomplete="off">
+                                    <label class="btn btn-primary place-marker-label" for="place-marker-a">Place it</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="marker-a-x">X Coord</label>
+                                    <input type="number" class="form-control in-game-coords-input" id="marker-a-x" placeholder="In-game x coord">
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="marker-a-y">Y Coord</label>
+                                    <input type="number" class="form-control in-game-coords-input" id="marker-a-y" placeholder="In-game y coord">
+                                </div>   
+                            </div>  
+                        </div>
+                        <div class="col-6">
+                            <div class="marker-info-wrapper">
+                                <h4>Marker B</h4>
+                                <div class="form-group">
+                                    <input type="checkbox" class="btn-check place-marker" id="place-marker-b" key="b" autocomplete="off">
+                                    <label class="btn btn-primary place-marker-label" for="place-marker-b">Place it</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="marker-b-x">X Coord</label>
+                                    <input type="number" class="form-control in-game-coords-input" id="marker-b-x" placeholder="In-game x coord">
+                                </div>
+                                <div class="form-group mb-2">
+                                    <label for="marker-b-y">Y Coord</label>
+                                    <input type="number" class="form-control in-game-coords-input" id="marker-b-y" placeholder="In-game y coord">
+                                </div>   
+                            </div> 
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-6"> 
+                            <div class="btn-group">
+                                <label id="calib-json-import-label" for="calib-json-input" class="btn btn-secondary">Import JSON</label>
+                                <input type="file" id="calib-json-input" class="d-none">
+                                <a id="calib-json-download-a" class="d-none"></a>
+                                <button id="calib-json-download-btn" class="btn btn-secondary">Export JSON</button>  
+                            </div>      
+                        </div>
+                        <div class="col-6">
+                            <button id="calibrate-btn" class="btn btn-success me-3">Calibrate</button> 
+                        </div>
+                    </div>
+                </div> 
+            </div>
+          
+          </div>
+    </body>
+</html>

@@ -1,40 +1,64 @@
 $(function(){
 
-    function drawWP(pt, drawLine = true){
+    function drawLine(p1,p2){
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo(p2.x,p2.y);
+        ctx.stroke();
+        ctx.closePath();
+    }
 
-        if(drawLine){
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(lastWaypoint.x,lastWaypoint.y);
-            ctx.lineTo(pt.x,pt.y);
-            ctx.stroke();
-            ctx.closePath();
-        }
+    function drawWP(pt, drawLineArg = true, color = defaultWaypointColor){
+
+        if(drawLineArg) drawLine(lastWaypoint,pt);
 
         const rectSize=8-zoomBalance/6;
-        ctx.fillStyle = "red";
+        ctx.fillStyle = color;
         ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
         lastWaypoint = pt;
+        
+    }
+
+    function closeLoop(){
+        drawLine(waypoints[0],waypoints[waypoints.length-1]);
     }
     
     function addWaypoint(pt, drawLine = true){
         pt=SVGtoCommonObj(pt);
-        drawWP(pt, drawLine);
-        waypoints.push(pt);
-        $("#waypoints-display").val(`${waypoints.length} Waypoints`);
+        lastWaypoint=pt; 
+
+        if(isPlacementReverted){
+            waypoints.unshift(pt);
+        }else{
+            waypoints.push(pt);
+        }
+
+        $("#waypoints-display").text(`Quantity: ${waypoints.length}`);
+
+        redraw();
     }
 
     function drawAllWPs(){
-        first = true;
-        waypoints.forEach(wp => {
+        let count = 0
+        let waypointsToIterate = waypoints.slice();
+        if(isPlacementReverted){
+            waypointsToIterate.reverse();
+        }
+        waypointsToIterate.forEach(wp => {
             const pt = {
                 x: wp.x,
                 y: wp.y
             }
-            drawWP(pt,!first);
-            first = false;
+            const color = (count == waypoints.length-1) ? 'blue ': defaultWaypointColor;
+                    
+            drawWP(pt, count, color);
+            count+=1;
         });
+        if(loopRoute && waypoints.length>2) closeLoop();
     }
+
+    const defaultWaypointColor = "red";
 
     function getDistance(pt1,pt2){
         return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
@@ -58,6 +82,12 @@ $(function(){
     let allowMove=true;
     $("#move-cb").change((e)=>{
         allowMove = e.target.checked;
+    })
+
+    let loopRoute=false;
+    $("#loop-cb").change((e)=>{
+        loopRoute = e.target.checked;
+        redraw();
     })
 
     let markers = {
@@ -127,21 +157,35 @@ $(function(){
         
     }
 
-    $("#clear-btn").click(()=>{
+    $("#remove-all-btn").click(()=>{
         if(waypoints.length==0){
-            alert("There is no waypoint to clear");
+            alert("There is no waypoint to remove");
             return;
         }
-        if(confirm("Clear all waypoitns?")){
+        if(confirm("Remove all waypoitns?")){
             waypoints.length=0;
-            $("#waypoints-display").val(`${waypoints.length} Waypoints`);
+            $("#waypoints-display").text(`Quantity: ${waypoints.length}`);
         }
         redraw();
     });
 
+    $("#remove-first-btn").click(()=>{
+        if(waypoints.length==0){
+            alert("There is no waypoint to remove");
+            return;
+        }
+        waypoints.shift();
+        $("#waypoints-display").text(`Quantity: ${waypoints.length}`);
+        redraw();
+    });
+
     $("#remove-last-btn").click(()=>{
+        if(waypoints.length==0){
+            alert("There is no waypoint to remove");
+            return;
+        }
         waypoints.pop();
-        $("#waypoints-display").val(`${waypoints.length} Waypoints`);
+        $("#waypoints-display").text(`Quantity: ${waypoints.length}`);
         redraw();
     });
 
@@ -151,21 +195,40 @@ $(function(){
         redraw();
     });
 
+    let isPlacementReverted = false;
+    $("#revert-placement").click(()=>{
+        isPlacementReverted = !isPlacementReverted;
+        console.log(waypoints);
+        if(isPlacementReverted){
+            lastWaypoint = waypoints[0];
+        }else{
+            lastWaypoint = waypoints[waypoints.length-1];
+        }
+        redraw(false);
+    });
+
+    function getExportableRoute(){
+        const output = {
+            "waypoints":[],
+            "loop": loopRoute
+        };
+        waypoints.forEach((wp) => {
+            output.waypoints.push(translateToGame(wp));
+        });
+        return output;
+    }
+
     $("#send-btn").click(()=>{
         if(jQuery.isEmptyObject(calibration)){
             alert("No calibration was done");
             return;
         }
-        const waypointsTranslated = [];
-        waypoints.forEach((wp) => {
-            waypointsTranslated.push(translateToGame(wp));
-        })
         $.ajax({
             url: '/',
             type: 'post',
             dataType: 'json',
             contentType: 'application/json',
-            data: JSON.stringify(waypointsTranslated)
+            data: JSON.stringify(getExportableRoute())
         });
     });
 
@@ -186,7 +249,7 @@ $(function(){
         let reader = new FileReader();
         reader.onload = (data) => {
             waypoints = JSON.parse(data.target.result);   
-            $("#waypoints-display").val(`${waypoints.length} Waypoints`);     
+            $("#waypoints-display").text(`Quantity: ${waypoints.length}`);    
             redraw();
         }
         reader.readAsText(e.target.files[0]);
@@ -391,14 +454,14 @@ $(function(){
 
 
     trackTransforms(ctx);  
-    function redraw(){
+    function redraw(resetLastWP = true){
         var p1 = ctx.transformedPoint(0,0);
         var p2 = ctx.transformedPoint(canvasDOM.width,canvasDOM.height);
         ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
 
         ctx.drawImage(image, 0 , 0);
 
-        drawAllWPs();
+        drawAllWPs(resetLastWP);
         drawAllMarkers();
     }
 

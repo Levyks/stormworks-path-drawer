@@ -33,8 +33,8 @@ app.get("/waypoint", (req,res)=>{
 
 app.post('/', function(req, res){
     waypoints.length = 0;
-    waypoints = req.body  
-    console.log(waypoints); 
+    console.log(req.body);
+    waypoints = req.body.waypoints  
     console.log(`${waypoints.length} Waypoints loaded`);  
     res.sendStatus(200);
 });

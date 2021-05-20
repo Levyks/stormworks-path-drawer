@@ -86,11 +86,44 @@ html, body {
     padding:12px;
 }
 
-#waypoints-display{
-    border-radius: 0.25rem 0.25rem 0 0 !important;
-    text-align: center;
+#waypoints-display-wrapper{
+    padding: 5px;
+    border-radius: .25rem;
+    background-color: #fff;
 }
 
+.remove-wrapper{
+    padding: 0!important;
+    color: white;
+    background-color: #6C757D !important;
+    border-radius: .25rem;
+}
+
+.remove-wrapper label{
+    margin-bottom: 0px;
+    font-size: 18px;
+}
+
+.remove-btn{
+    padding: 6px 2px 6px 2px !important;
+}
+
+.remove-btn-group{
+    padding: 0;
+    width: 100%;
+}
+
+.remove-btn-group>.remove-btn-group:not(:last-child)>.btn, .remove-btn-group>.btn:not(:last-child):not(.dropdown-toggle) {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.remove-btn-group>.remove-btn-group:not(:first-child)>.btn, .remove-btn-group>.btn:nth-child(n+3), .remove-btn-group>:not(.btn-check)+.btn {
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
 
 
 

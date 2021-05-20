@@ -24,7 +24,7 @@
                         <button class="btn btn-primary" id="zoom-out"><b>-</b></button>
                     </div>
                 </div>
-                <div class="row mb-3">
+                <div class="row mb-2">
                     <div class="allow-move-div-wrapper div-section-wrapper">
                         <div class="allow-move-div div-section">
                             <input class="form-check-input" type="checkbox" checked id="move-cb">
@@ -38,17 +38,41 @@
                     <div class="waypoints-div-wrapper div-section-wrapper">
                         <div class="waypoints-div div-section">
                             <h3>Waypoints</h3>
+                            <div class="row mb-2">
+                                <div class="col">
+                                    <div id="waypoints-display-wrapper">
+                                        <span id="waypoints-display">Quantity: 0</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group mb-2">
                                 <label for="wp-distance-input">Distance between wps</label>
                                 <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters">
                             </div> 
+                            <div class="row mb-2">  
+                                <div class="col">
+                                    <input class="form-check-input" type="checkbox" id="loop-cb">
+                                    <label class="" for="loop-cb">
+                                        Loop route
+                                    </label>
+                                </div>
+                            </div>
                             <div class="row mb-2">
-                                <div class="btn-group-vertical">
-                                    <button class="btn d-none"></button>
-                                    <input type="text" class="form-control" id="waypoints-display" disabled value="0 Waypoints">
-                                    <button id="remove-last-btn" class="btn btn-warning">Remove Last</button>
-                                    <button id="clear-btn" class="btn btn-danger">Clear All</button>
-                                </div> 
+                                <div class="col">
+                                    <button class="btn btn-info w-100" id="revert-placement">Revert Placement</button>
+                                </div>
+                            </div>
+                            <div class="row mb-2">  
+                                <div class="col">
+                                    <div class="remove-wrapper">
+                                        <label>Remove WP</label>
+                                        <div class="btn-group remove-btn-group" role="group">
+                                            <button type="button" class="btn btn-warning remove-btn" id="remove-first-btn">First</button>
+                                            <button type="button" class="btn btn-danger remove-btn" id="remove-all-btn">All</button>
+                                            <button type="button" class="btn btn-warning remove-btn" id="remove-last-btn">Last</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="row mb-2">
                                 <div class="btn-group-vertical">

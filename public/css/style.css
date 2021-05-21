@@ -59,6 +59,11 @@ html, body {
     text-align: center;
 }
 
+.modal-in-import-export {
+    max-width: 400px;
+    text-align: left;
+}
+
 .close-btn-div{
     height: 100%;
     position: relative;

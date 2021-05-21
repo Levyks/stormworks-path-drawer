@@ -246,14 +246,19 @@ $(function(){
         redraw();
     });
 
-    function getExportableRoute(){
+    function getExportableRoute(relativeTo = "game"){
         const output = {
-            "waypoints":[],
-            "loop": loopRoute
+            "relativeTo": relativeTo,
+            "loop": loopRoute,
+            "waypoints":[]
         };
-        waypoints.forEach((wp) => {
-            output.waypoints.push(translateToGame(wp));
-        });
+        if(relativeTo == "game"){
+            waypoints.forEach((wp) => {
+                output.waypoints.push(translateToGame(wp));
+            });
+        }else{
+            output.waypoints = waypoints;
+        }
         return output;
     }
 
@@ -271,37 +276,95 @@ $(function(){
         });
     });
 
-    $("#wps-json-download-btn").click(()=>{
+    $("#export-form").submit((e)=>{
+        e.preventDefault();
+        const form = e.target;
+        const relativeTo = form.elements['export-relative-to'].value;
+
         if(!waypoints.length){
             alert("There is no waypoint to export");
             return;
         }
-        console.log(waypoints);
-        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(waypoints, null, 2));
-        var dlAnchorElem = document.getElementById('wps-json-download-a');
-        dlAnchorElem.setAttribute("href",     dataStr     );
-        dlAnchorElem.setAttribute("download", "wpsExport.json");
-        dlAnchorElem.click();
-    })
-
-    $("#wps-json-input").change((e)=>{
-        let reader = new FileReader();
-        reader.onload = (data) => {
-            waypoints = JSON.parse(data.target.result);   
-            $("#waypoints-display").text(`Quantity: ${waypoints.length}`);    
-            redraw();
-        }
-        reader.readAsText(e.target.files[0]);
-    })
-
-    function translateToGame(pt){
-        if(jQuery.isEmptyObject(calibration)){
+        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
             alert("No calibration was done");
             return;
         }
+        let fileName = form.elements['export-filename'].value
+        if(!fileName.endsWith(".json")) fileName+=".json";
+
+        const dataToExport = getExportableRoute(relativeTo);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+        const dlAnchorElem = $('#wps-json-download-a');
+        dlAnchorElem.attr("href", dataStr);
+        dlAnchorElem.attr("download", fileName);
+        dlAnchorElem[0].click();
+
+        form.reset();  
+        $("#modal-out-export").css("display","none");
+    })
+
+    $("#import-form").submit((e)=>{
+        e.preventDefault();
+        const form = e.target;
+        const relativeTo = form.elements['import-relative-to'].value;
+        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
+            alert("No calibration was done");
+            return;
+        }
+        let reader = new FileReader();
+        reader.onload = (data) => {
+            const dataParsed = JSON.parse(data.target.result);
+            let dataToImport = {}
+
+            //Support for legacy jsons
+            if(Array.isArray(dataParsed)){
+                console.log("Legacy JSON detected");
+                dataToImport.loop = false;
+                dataToImport.relativeTo = "map";
+                dataToImport.waypoints = dataParsed;
+            }else{
+                dataToImport = dataParsed;
+            }
+
+            if(dataToImport.relativeTo !== relativeTo){
+                alert(`This json is relative to "${dataToImport.relativeTo}" and not "${relativeTo}", select the correct option and try again`);
+                return;
+            }
+
+            if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
+                alert("No calibration was done");
+                return;
+            }
+
+            waypoints.length = 0;
+
+            if(relativeTo == "game"){
+                dataToImport.waypoints.forEach((wp) => {
+                    waypoints.push(translateToMap(wp));        
+                });
+            }else{
+                waypoints = dataToImport.waypoints;
+            }
+            
+            $("#waypoints-display").text(`Quantity: ${waypoints.length}`);  
+            $("#modal-out-import").css("display","none");
+            form.reset();  
+            redraw();
+        }
+        reader.readAsText(form.elements['file-to-import'].files[0]);
+    })
+
+    function translateToGame(pt){
         return {
             x: (pt.x*calibration.ratioX)+calibration.constX,
             y: (pt.y*calibration.ratioY)+calibration.constY
+        }
+    }
+
+    function translateToMap(pt){
+        return {
+            x: (pt.x-calibration.constX)/calibration.ratioX,
+            y: (pt.y-calibration.constY)/calibration.ratioY
         }
     }
 
@@ -371,10 +434,8 @@ $(function(){
         if (dragStart){
             var pt = ctx.transformedPoint(lastX,lastY);
             if (allowMove){
-                //if(checkLimits(pt)){
-                    ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
-                    redraw();
-                //}
+                ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
+                redraw();
             }else{
                 if(getDistance(pt,lastWaypoint) > distanceBetweenWPs){
                     addWaypoint(pt);
@@ -579,14 +640,9 @@ $(function(){
 
 
 
-
-
-
-
-
-    $("#open-calibrate-modal").click((e) => {
-        $("#modal-out-calib").css("display","block");
-    });
+    $(".open-modal-btn").click((e) => {
+        $("#"+(e.target.getAttribute("modal"))).css("display","block");
+    })
 
     $(".close-modal").click((e) => {
         $(e.target).closest($(".modal-outside")).css("display","none");

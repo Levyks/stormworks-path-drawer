@@ -76,10 +76,8 @@
                             </div>
                             <div class="row mb-2">
                                 <div class="btn-group-vertical">
-                                    <label id="wps-json-import-label" for="wps-json-input" class="btn btn-secondary">Import JSON</label>
-                                    <input type="file" id="wps-json-input" class="d-none">
-                                    <a id="wps-json-download-a" class="d-none"></a>
-                                    <button id="wps-json-download-btn" class="btn btn-secondary">Export JSON</button>  
+                                    <button id="open-import-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-import">Import Route</button>  
+                                    <button id="open-export-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-export">Export Route</button>  
                                     <button id="send-btn" class="btn btn-success">Send to Server</button>
                                 </div> 
                             </div>
@@ -90,7 +88,7 @@
                 <div class="row mt-auto mb-2">
                     <div class="row inner-row mb-2">
                         <div class="btn-group-vertical">
-                            <button id="open-calibrate-modal" class="btn btn-primary">Calibrate</button>
+                            <button id="open-calibrate-modal" class="btn btn-primary open-modal-btn" modal="modal-out-calib">Calibrate</button>
                             <button id="reset-btn" class="btn btn-warning">Reset Map</button>
                         </div>
                     </div>
@@ -164,5 +162,87 @@
             </div>
           
           </div>
+          <div id="modal-out-export" class="modal-outside">
+            <div id="modal-in-export" class="modal-inside modal-in-import-export">
+                <div class="row mb-3">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <h2 class="modal-title">Export Route</h2>
+                    </div>
+                    <div class="col-1">
+                        <div class="close-btn-div">
+                            <button type="button" class="btn-close close-modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-main">
+                    <div class="row">
+                        <div class="col">
+                            <form id="export-form" action="">
+                                <label>Export relative to:</label>   
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="export-relative-to" id="export-rel-to-game" value="game">
+                                    <label class="form-check-label" for="relative-to-game">
+                                    Game coordinates (requires calibration)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="export-relative-to" id="export-rel-to-map" value="map" checked>
+                                    <label class="form-check-label" for="relative-to-map">
+                                    Map coordinates
+                                    </label>
+                                </div>
+                                <div class="form-group mb-4">
+                                    <label for="export-filename">Filename</label>
+                                    <input type="text" class="form-control" id="export-filename" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="wps-json-export-btn">Export</button>
+                                <a id="wps-json-download-a" class="d-none"></a>
+                            </form>
+                        </div>
+                    </div>
+                </div> 
+            </div>  
+          </div>
+          <div id="modal-out-import" class="modal-outside">
+            <div id="modal-in-import" class="modal-inside modal-in-import-export">
+                <div class="row mb-3">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <h2 class="modal-title">Import Route</h2>
+                    </div>
+                    <div class="col-1">
+                        <div class="close-btn-div">
+                            <button type="button" class="btn-close close-modal" aria-label="Close"></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-main">
+                    <div class="row">
+                        <div class="col">
+                            <form id="import-form" action="">
+                                <label>Import relative to:</label>   
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="import-relative-to" id="import-rel-to-game" value="game">
+                                    <label class="form-check-label" for="relative-to-game">
+                                    Game coordinates (requires calibration)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="import-relative-to" id="import-rel-to-map" value="map" checked>
+                                    <label class="form-check-label" for="relative-to-map">
+                                    Map coordinates
+                                    </label>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="wps-json-input">Choose the .json file</label>
+                                    <input type="file" class="form-control-file" name="file-to-import" id="wps-json-input" accept=".json" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="wps-json-import-btn">Import</button>
+                            </form>
+                        </div>
+                    </div>
+                </div> 
+            </div>
     </body>
 </html>

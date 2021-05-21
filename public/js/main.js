@@ -9,30 +9,64 @@ $(function(){
         ctx.closePath();
     }
 
-    function drawWP(pt, drawLineArg = true, color = defaultWaypointColor){
+    function drawTriangleInTheMiddle(pStart,pEnd){
+        const distance = getDistance(pStart,pEnd);
+        const triangleSize = 8-zoomBalance/6;
 
-        if(drawLineArg) drawLine(lastWaypoint,pt);
+        const avgPt = {
+            x: (pEnd.x+pStart.x)/2,
+            y: (pEnd.y+pStart.y)/2
+        }
 
+        const deltaX = triangleSize * (pEnd.x-pStart.x) / distance;
+        const deltaY = triangleSize * (pEnd.y-pStart.y) / distance;
+
+        const p1 = {
+            x: avgPt.x+deltaX,
+            y: avgPt.y+deltaY
+        }
+
+        const p2 = {
+            x: avgPt.x + (-(deltaX/2)-((Math.sqrt(3)/2)*deltaY)),
+            y: avgPt.y + (((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
+        }
+
+        const p3 = {
+            x: avgPt.x + (-(deltaX/2)+((Math.sqrt(3)/2)*deltaY)),
+            y: avgPt.y + (-((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
+        }
+        
+        ctx.moveTo(p1.x,p1.y);
+        ctx.lineTo(p2.x,p2.y);
+        ctx.lineTo(p3.x,p3.y);
+        ctx.lineTo(p1.x,p1.y);
+
+        ctx.fillStyle="yellow";
+        ctx.fill()
+    }
+
+    function drawWP(pt, first = false, color = defaultWaypointColor){
         const rectSize=8-zoomBalance/6;
         ctx.fillStyle = color;
         ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
-        lastWaypoint = pt;
-        
+
+        if(!first) {
+            drawLine(lastWaypoint,pt);
+            drawTriangleInTheMiddle(lastWaypoint,pt);
+        }   
+        lastWaypoint = pt;  
     }
 
     function closeLoop(){
-        drawLine(waypoints[0],waypoints[waypoints.length-1]);
+        drawLine(waypoints[waypoints.length-1],waypoints[0]);
+        drawTriangleInTheMiddle(waypoints[waypoints.length-1],waypoints[0]);
     }
     
     function addWaypoint(pt, drawLine = true){
         pt=SVGtoCommonObj(pt);
         lastWaypoint=pt; 
 
-        if(isPlacementReverted){
-            waypoints.unshift(pt);
-        }else{
-            waypoints.push(pt);
-        }
+        waypoints.push(pt);
 
         $("#waypoints-display").text(`Quantity: ${waypoints.length}`);
 
@@ -42,17 +76,26 @@ $(function(){
     function drawAllWPs(){
         let count = 0
         let waypointsToIterate = waypoints.slice();
-        if(isPlacementReverted){
-            waypointsToIterate.reverse();
-        }
+
         waypointsToIterate.forEach(wp => {
             const pt = {
                 x: wp.x,
                 y: wp.y
             }
-            const color = (count == waypoints.length-1) ? 'blue ': defaultWaypointColor;
+            let color;
+            switch (count){
+                case 0:
+                    color = "green";
+                    break; 
+                case waypoints.length-1:
+                    color = "blue";
+                    break;
+                default:
+                    color = "red";
+                    break;
+            }
                     
-            drawWP(pt, count, color);
+            drawWP(pt, !count, color);
             count+=1;
         });
         if(loopRoute && waypoints.length>2) closeLoop();
@@ -196,15 +239,11 @@ $(function(){
     });
 
     let isPlacementReverted = false;
-    $("#revert-placement").click(()=>{
+    $("#revert-btn").click(()=>{
         isPlacementReverted = !isPlacementReverted;
-        console.log(waypoints);
-        if(isPlacementReverted){
-            lastWaypoint = waypoints[0];
-        }else{
-            lastWaypoint = waypoints[waypoints.length-1];
-        }
-        redraw(false);
+        waypoints.reverse();
+        lastWaypoint = waypoints[waypoints.length-1];
+        redraw();
     });
 
     function getExportableRoute(){
@@ -454,14 +493,14 @@ $(function(){
 
 
     trackTransforms(ctx);  
-    function redraw(resetLastWP = true){
+    function redraw(){
         var p1 = ctx.transformedPoint(0,0);
         var p2 = ctx.transformedPoint(canvasDOM.width,canvasDOM.height);
         ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
 
         ctx.drawImage(image, 0 , 0);
 
-        drawAllWPs(resetLastWP);
+        drawAllWPs();
         drawAllMarkers();
     }
 

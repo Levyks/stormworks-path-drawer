@@ -330,7 +330,8 @@ $(function(){
             $("#marker-a-x").val(markers.a.inGameCoords.x); 
             $("#marker-a-y").val(markers.a.inGameCoords.y);
             $("#marker-b-x").val(markers.b.inGameCoords.x);
-            $("#marker-b-y").val(markers.b.inGameCoords.y); 
+            $("#marker-b-y").val(markers.b.inGameCoords.y);
+            calibrate(); 
             redraw();
         }
         reader.readAsText(e.target.files[0]);

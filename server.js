@@ -2,10 +2,8 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 
-let waypoints = []
+let route = {};
 
-waypoints = JSON.parse(fs.readFileSync('waypoints.json'));
-console.log(waypoints.length);
 
 const app = express();
 
@@ -21,9 +19,14 @@ app.use(express.json());
 app.use(express.static('public'));
 
 app.get("/waypoint", (req,res)=>{
+    if(req.query.info !== undefined){
+        res.end(`${route.loop ? 1 : 0},${route.waypoints.length}`)
+        return;
+    }
+    
     var now = new Date();
-    console.log(now.toLocaleTimeString(), req.query.id);
-    const waypoint = waypoints[req.query.id];
+    console.log(now.toLocaleTimeString(), req.query.get);
+    const waypoint = route.waypoints[req.query.get];
     if(waypoint){
         res.end(`${waypoint.x},${waypoint.y}`);
     }else{ 
@@ -32,10 +35,9 @@ app.get("/waypoint", (req,res)=>{
 });
 
 app.post('/', function(req, res){
-    waypoints.length = 0;
-    console.log(req.body);
-    waypoints = req.body.waypoints  
-    console.log(`${waypoints.length} Waypoints loaded`);  
+    route = req.body
+    console.log(route);
+    console.log(`${route.waypoints.length} Waypoints loaded`);  
     res.sendStatus(200);
 });
 

@@ -1,5 +1,6 @@
-async.httpGet(3000,'/waypoint?id=0')
-async.httpGet(3000,'/waypoint?id=1')
+async.httpGet(3000,'/waypoint?info')
+async.httpGet(3000,'/waypoint?get=0')
+async.httpGet(3000,'/waypoint?get=1')
 wpLoaded = false --true
 dataProcessed = false
 firstWp = true
@@ -10,12 +11,12 @@ wpX = 0
 wpY = 0
 nextWpX = 0
 nextWpY = 0
-distanceToAchieveWP=20
+distanceToAchieveWP=10
 radius = 20
 
 straightSpeed = 20
 cornerSpeed = 10
-cornerAngle = math.pi/6 --30
+cornerAngle = math.pi/6 --30º
 
 
 function onTick()
@@ -73,23 +74,32 @@ function onDraw()
 end
 
 function httpReply(port, request_body, response_body)
-    if(response_body~='404') then
-    	x,y = response_body:match("([^,]+),([^,]+)")
-    	if(firstWp) then
-	    	wpX = tonumber(x)
-	    	wpY = tonumber(y)
-	    	wpLoaded=true
-	    	firstWp=false
+	if(request_body == "/waypoint?info") then
+		loopInt, qtyWP = response_body:match("([^,]+),([^,]+)")
+		if(loopInt=='1') then loop = true
+		else loop = false end
+	else
+	    if(response_body~='404') then
+	    	x,y = response_body:match("([^,]+),([^,]+)")
+	    	if(firstWp) then
+		    	wpX = tonumber(x)
+		    	wpY = tonumber(y)
+		    	wpLoaded=true
+		    	firstWp=false
+		    else
+		    	nextWpX = tonumber(x)
+		    	nextWpY = tonumber(y)
+		    	nextWaypointLoaded = true
+		    end
 	    else
-	    	nextWpX = tonumber(x)
-	    	nextWpY = tonumber(y)
-	    	nextWaypointLoaded = true
+	    	if(loop) then
+				currWp = -1
+				async.httpGet(3000,'/waypoint?get=0')
+			else
+				done=true
+			end
 	    end
-    else
-		currWp = 0
-		async.httpGet(3000,'/waypoint?id=0')
-    end
-
+	end
 end
 
 function drawCircleLinePoints(cX,cY,R,angle) 
@@ -110,6 +120,6 @@ function nextWaypoint()
 	wpX = nextWpX
 	wpY = nextWpY
 	nextWaypointLoaded = false
-	async.httpGet(3000,'/waypoint?id='..currWp+1)
+	async.httpGet(3000,'/waypoint?get='..currWp+1)
 end
 

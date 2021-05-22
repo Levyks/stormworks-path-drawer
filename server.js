@@ -2,9 +2,6 @@ const express = require("express");
 const fs = require("fs");
 const cors = require("cors");
 
-let route = {};
-
-
 const app = express();
 
 app.use(
@@ -18,28 +15,79 @@ app.use(express.json());
 
 app.use(express.static('public'));
 
-app.get("/waypoint", (req,res)=>{
-    if(req.query.info !== undefined){
-        res.end(`${route.loop ? 1 : 0},${route.waypoints.length}`)
-        return;
-    }
-    
-    var now = new Date();
-    console.log(now.toLocaleTimeString(), req.query.get);
-    const waypoint = route.waypoints[req.query.get];
-    if(waypoint){
-        res.end(`${waypoint.x},${waypoint.y}`);
-    }else{ 
-        res.end('404');
-    }
-});
+let routeData = {};
+let currentStep = 0;
+let stepLooped = 0;
+let currentWpOnStep = 0;
 
-app.post('/', function(req, res){
-    route = req.body
-    console.log(route);
-    console.log(`${route.waypoints.length} Waypoints loaded`);  
+function resetRouteVars(){
+    currentStep = 0;
+    stepLooped = 0;
+    currentWpOnStep = 0;
+}
+
+app.get("/get-directions/start", (req,res)=>{
+    resetRouteVars();
     res.sendStatus(200);
 });
+
+app.get("/get-directions/next-waypoint", getNextWaypoint);
+
+function getNextWaypoint(req, res){
+    const step = routeData.route[currentStep];
+    if(!step){
+        if(routeData.loop){
+            resetRouteVars();
+            getNextWaypoint(req, res);
+            return;
+        }else{
+            res.end("end");
+            return;
+        }
+    }
+
+    const waypoint = step.waypoints[currentWpOnStep];
+    if(!waypoint){
+        if(step.loop && step.loopQuantity == 0 || step.loopQuantity < stepLooped){
+            currentWpOnStep = 0;
+            stepLooped++;
+            getNextWaypoint(req, res);
+            return;
+        }else{
+            currentStep++;
+            currentWpOnStep = 0;
+            getNextWaypoint(req, res);
+            return;
+        }
+    }
+
+    res.end(`${waypoint.x},${waypoint.y}`);
+
+    const now = new Date().toLocaleString();
+
+    console.log({
+        datetime: now,
+        currentStep: currentStep,
+        stepLooped: stepLooped,
+        currentWpOnStep: currentWpOnStep,
+        waypoint: waypoint
+    });
+
+    currentWpOnStep++;
+
+    return
+}
+
+app.post('/', function(req, res){
+    routeData = req.body
+    console.log(routeData);
+    res.sendStatus(200);
+});
+
+
+
+
+
 
 const PORT = process.env.PORT || 3000;
 

@@ -27,11 +27,19 @@
                 </div>
                 <div class="row mb-2">
                     <div class="allow-move-div-wrapper div-section-wrapper">
-                        <div class="allow-move-div div-section">
-                            <input class="form-check-input" type="checkbox" checked id="move-cb">
-                            <label class="" for="move-cb">
-                                Allow move
-                            </label>
+                        <div class="allow-move-div div-section text-start">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="move-radio" id="panzoom-move-radio" value="panNzoom" checked>
+                                <label class="form-check-label" for="panzoom-move-radio">
+                                  Pan/Zoom
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="move-radio" value="placeWP" id="plcwp-move-radio">
+                                <label class="form-check-label" for="plcwp-move-radio">
+                                  Place Waypoints
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>

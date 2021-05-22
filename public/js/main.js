@@ -167,8 +167,8 @@ $(function(){
     };
 
     let allowMove=true;
-    $("#move-cb").change((e)=>{
-        allowMove = e.target.checked;
+    $('input[type=radio][name=move-radio]').change((e)=>{
+        allowMove = (e.target.value == "panNzoom");
     })
 
     $("#loop-step-cb").change((e)=>{
@@ -543,7 +543,7 @@ $(function(){
                 <div class="form-check">
                     <input class="form-check-input loop-step-table-cb" value="${count}" type="checkbox" ${route[count].loop ? "checked" : ""}>
                     <div class="form-group input-group-sm"> 
-                        <input type="text" class="form-control input-sm loop-quantity-input" value="&#8734" id="loop-quantity-input-${count}" step="${count}" ${routeStep.loop ? "" : "disabled"}>
+                        <input type="text" class="form-control input-sm loop-quantity-input" id="loop-quantity-input-${count}" step="${count}" ${routeStep.loop && !routeStep.loopQuantity ? 'value="&#8734"' : ''} ${routeStep.loop ? "" : "disabled"}>
                     </div>   
                 </div>
             </td>
@@ -567,7 +567,9 @@ $(function(){
             if(stepClicked == currentRouteStep){
                 $("#loop-step-cb").prop("checked", e.target.checked);
             }
-            $(`#loop-quantity-input-${stepClicked}`).prop("disabled", !e.target.checked);
+            const loopInput = $(`#loop-quantity-input-${stepClicked}`);
+            loopInput.val(e.target.checked ? '∞' : '');
+            loopInput.prop("disabled", !e.target.checked);
         });  
 
         const deleteBtns = $(".delete-step-btn");

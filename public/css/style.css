@@ -146,3 +146,7 @@ html, body {
 .edit-route-btn{
     padding: 1px 10px 1px 10px !important;
 }
+
+.step-managing-btn{
+    padding: 2px 8px 2px 8px !important;
+}

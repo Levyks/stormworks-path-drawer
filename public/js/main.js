@@ -58,56 +58,93 @@ $(function(){
         ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
 
         if(!first) {
-            drawLine(lastWaypoint,pt);
-            drawTriangleInTheMiddle(lastWaypoint,pt);
+            drawLine(lastDrawedWaypoint,pt);
+            drawTriangleInTheMiddle(lastDrawedWaypoint,pt);
         }   
-        lastWaypoint = pt;  
+        lastDrawedWaypoint = pt;  
     }
 
-    function closeLoop(){
-        drawLine(route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1],route[currentRouteStep].waypoints[0]);
-        drawTriangleInTheMiddle(route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1],route[currentRouteStep].waypoints[0]);
+    function closeLoop(step){
+        drawLine(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
+        drawTriangleInTheMiddle(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
     }
     
     function addWaypoint(pt){
+
         pt=SVGtoCommonObj(pt);
 
         route[currentRouteStep].waypoints.push(pt);
 
-        $("#route[currentRouteStep].waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+        lastPlacedWaypoint = pt;
+
+        $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
 
         redraw();
     }
 
     function drawAllWPs(){
+
         let count = 0
 
-        if(currentRouteStep){
-            const prevStepWPS = route[currentRouteStep-1].waypoints
-            const lastWaypointFromPrevStep = prevStepWPS[prevStepWPS.length-1];
-            drawWP(lastWaypointFromPrevStep, true, "orange");
-        }
+        if(route.length){
+            if(!viewCompleteRoute){
 
+                if(currentRouteStep){
+                    const prevStepWPS = route[currentRouteStep-1].waypoints
+                    const lastWaypointFromPrevStep = prevStepWPS[prevStepWPS.length-1];
+                    if(lastWaypointFromPrevStep) drawWP(lastWaypointFromPrevStep, true, "orange");
+                }
 
-        route[currentRouteStep].waypoints.forEach(wp => {
-            const pt = SVGtoCommonObj(wp);
-            let color;
-            switch (count){
-                case 0:
-                    color = "green";
-                    break; 
-                case route[currentRouteStep].waypoints.length-1:
-                    color = "blue";
-                    break;
-                default:
-                    color = "red";
-                    break;
+                route[currentRouteStep].waypoints.forEach(wp => {
+                    let color;
+                    switch (count){
+                        case 0:
+                            color = "green";
+                            break; 
+                        case route[currentRouteStep].waypoints.length-1:
+                            color = "blue";
+                            break;
+                        default:
+                            color = defaultWaypointColor;
+                            break;
+                    }
+                            
+                    drawWP(wp, !(count || currentRouteStep), color);
+                    count+=1;
+
+                });
+
+                if(route[currentRouteStep].loop && route[currentRouteStep].waypoints.length>2) closeLoop(route[currentRouteStep]);
+
+                if(currentRouteStep<route.length-1){
+                    const nextStepWPS = route[currentRouteStep+1].waypoints
+                    const firstWaypointFromPrevStep = nextStepWPS[0];
+                    if(firstWaypointFromPrevStep) drawWP(firstWaypointFromPrevStep, false, "purple");  
+                }
+            }else{
+                let drawingStep = 0;
+                route.forEach((routeStep) => {
+                    const lastStep = drawingStep == route.length-1;
+                    let relativeCount = 0;
+                    routeStep.waypoints.forEach(wp => {
+                        let color;
+                        if(relativeCount==0){
+                            color = "green"; //FIRST WAYPOINT OF STEP
+                        }else if(relativeCount == route[drawingStep].waypoints.length-1){
+                            color="blue"; //LAST WAYPOINT OF STEP
+                        }else{
+                            color=defaultWaypointColor; //COMMON WAYPOINT
+                        }
+                        drawWP(wp, !count, color);
+                        count+=1;
+                        relativeCount+=1;
+                    });
+                    if(routeStep.loop && routeStep.waypoints.length>2) closeLoop(routeStep);
+                    drawingStep += 1;
+                });
+
             }
-                    
-            drawWP(pt, !(count || currentRouteStep), color);
-            count+=1;
-        });
-        if(route[currentRouteStep].loop && route[currentRouteStep].waypoints.length>2) closeLoop();
+        }
     }
 
     const defaultWaypointColor = "red";
@@ -134,7 +171,7 @@ $(function(){
         allowMove = e.target.checked;
     })
 
-    $("#loop-cb").change((e)=>{
+    $("#loop-step-cb").change((e)=>{
         route[currentRouteStep].loop = e.target.checked;
         redraw();
     })
@@ -192,9 +229,9 @@ $(function(){
             alert("There is no waypoint to remove");
             return;
         }
-        if(confirm("Remove all waypoitns?")){
+        if(confirm("Remove all waypoints?")){
             route[currentRouteStep].waypoints.length=0;
-            $("#route[currentRouteStep].waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+            $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
         }
         redraw();
     });
@@ -205,7 +242,7 @@ $(function(){
             return;
         }
         route[currentRouteStep].waypoints.shift();
-        $("#route[currentRouteStep].waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+        $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
         redraw();
     });
 
@@ -215,7 +252,7 @@ $(function(){
             return;
         }
         route[currentRouteStep].waypoints.pop();
-        $("#route[currentRouteStep].waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+        $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
         redraw();
     });
 
@@ -229,117 +266,10 @@ $(function(){
     $("#revert-btn").click(()=>{
         isPlacementReverted = !isPlacementReverted;
         route[currentRouteStep].waypoints.reverse();
-        lastWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
+        lastDrawedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
         redraw();
     });
 
-    function getExportableRoute(relativeTo = "game"){
-        const output = {
-            "relativeTo": relativeTo,
-            "loop": route[currentRouteStep].loop,
-            "route[currentRouteStep].waypoints":[]
-        };
-        if(relativeTo == "game"){
-            route[currentRouteStep].waypoints.forEach((wp) => {
-                output.route[currentRouteStep].waypoints.push(translateToGame(wp));
-            });
-        }else{
-            output.route[currentRouteStep].waypoints = route[currentRouteStep].waypoints;
-        }
-        return output;
-    }
-
-    $("#send-btn").click(()=>{
-        if(jQuery.isEmptyObject(calibration)){
-            alert("No calibration was done");
-            return;
-        }
-        $.ajax({
-            url: '/',
-            type: 'post',
-            dataType: 'json',
-            contentType: 'application/json',
-            data: JSON.stringify(getExportableRoute())
-        });
-    });
-
-    $("#export-form").submit((e)=>{
-        e.preventDefault();
-        const form = e.target;
-        const relativeTo = form.elements['export-relative-to'].value;
-
-        if(!route[currentRouteStep].waypoints.length){
-            alert("There is no waypoint to export");
-            return;
-        }
-        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
-            alert("No calibration was done");
-            return;
-        }
-        let fileName = form.elements['export-filename'].value
-        if(!fileName.endsWith(".json")) fileName+=".json";
-
-        const dataToExport = getExportableRoute(relativeTo);
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
-        const dlAnchorElem = $('#wps-json-download-a');
-        dlAnchorElem.attr("href", dataStr);
-        dlAnchorElem.attr("download", fileName);
-        dlAnchorElem[0].click();
-
-        form.reset();  
-        $("#modal-out-export").css("display","none");
-    })
-
-    $("#import-form").submit((e)=>{
-        e.preventDefault();
-        const form = e.target;
-        const relativeTo = form.elements['import-relative-to'].value;
-        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
-            alert("No calibration was done");
-            return;
-        }
-        let reader = new FileReader();
-        reader.onload = (data) => {
-            const dataParsed = JSON.parse(data.target.result);
-            let dataToImport = {}
-
-            //Support for legacy jsons
-            if(Array.isArray(dataParsed)){
-                console.log("Legacy JSON detected");
-                dataToImport.loop = false;
-                dataToImport.relativeTo = "map";
-                dataToImport.route[currentRouteStep].waypoints = dataParsed;
-            }else{
-                dataToImport = dataParsed;
-            }
-
-            if(dataToImport.relativeTo !== relativeTo){
-                alert(`This json is relative to "${dataToImport.relativeTo}" and not "${relativeTo}", select the correct option and try again`);
-                return;
-            }
-
-            if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
-                alert("No calibration was done");
-                return;
-            }
-
-            route[currentRouteStep].waypoints.length = 0;
-
-            if(relativeTo == "game"){
-                dataToImport.route[currentRouteStep].waypoints.forEach((wp) => {
-                    route[currentRouteStep].waypoints.push(translateToMap(wp));        
-                });
-            }else{
-                route[currentRouteStep].waypoints = dataToImport.route[currentRouteStep].waypoints;
-            }
-            
-            $("#route[currentRouteStep].waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);  
-            $("#modal-out-import").css("display","none");
-            form.reset();  
-            redraw();
-        }
-        reader.readAsText(form.elements['file-to-import'].files[0]);
-    })
 
     function translateToGame(pt){
         return {
@@ -369,7 +299,8 @@ $(function(){
         console.log(distanceBetweenWPs);
     })
 
-    let lastWaypoint = {};
+    let lastDrawedWaypoint = {};
+    let lastPlacedWaypoint = {};
 
     /*-------------------------------------------------
      * MOUSE EVENTS HANDLERS */
@@ -383,7 +314,7 @@ $(function(){
         lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
         lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
         dragStart = ctx.transformedPoint(lastX,lastY);
-        if(!allowMove && !markers.toPlace) addWaypoint(dragStart,route[currentRouteStep].waypoints.length);
+        if(!allowMove && !markers.toPlace &&!viewCompleteRoute) addWaypoint(dragStart,route[currentRouteStep].waypoints.length);
         dragged = false;
     });
 
@@ -397,7 +328,7 @@ $(function(){
                 ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
                 redraw();
             }else{
-                if(getDistance(pt,lastWaypoint) > distanceBetweenWPs){
+                if(getDistance(pt,lastPlacedWaypoint) > distanceBetweenWPs && !viewCompleteRoute){
                     addWaypoint(pt);
                 }
             }
@@ -505,6 +436,7 @@ $(function(){
             $("#marker-b-y").val(markers.b.inGameCoords.y);
             calibrate(); 
             redraw();
+            $("#modal-out-calib").css("display","none");
         }
         reader.readAsText(e.target.files[0]);
     });
@@ -559,7 +491,7 @@ $(function(){
     /*-------------------------------------------------
      * MODALS */
 
-    $("#open-manage-modal").click(updateManageTable);
+    $(".open-manage-modal-btn").click(updateManageTable);
 
     $(".open-modal-btn").click((e) => {
         $("#"+(e.target.getAttribute("modal"))).css("display","block");
@@ -582,9 +514,12 @@ $(function(){
      * ROUTE MANAGING */
 
     let currentRouteStep = 0;
+    let viewCompleteRoute = false;
+    let loopRoute = false;
     let route = [
         {
             loop: false,
+            loopQuantity: 0,
             waypoints: []
         },
     ];
@@ -598,45 +533,264 @@ $(function(){
             row.innerHTML = `
             <th scope="row">${count+1}</th>
             <td>                                             
-                <button class="btn route-table-btn"><i class="fa fa-arrow-up"></i></button>
-                <button class="btn route-table-btn"><i class="fa fa-arrow-down"></i></button> 
-                <button class="btn route-table-btn"><i class="fa fa-times text-danger"></i> </i></button>  
+                <button class="btn route-table-btn move-route-btn" value="${count}" increment="-1"><i class="fa fa-arrow-up"></i></button>
+                <button class="btn route-table-btn move-route-btn" value="${count}" increment="1"><i class="fa fa-arrow-down"></i></button> 
+                <button class="btn route-table-btn delete-step-btn" value="${count}"><i class="fa fa-times text-danger"></i> </i></button>  
             </td>
             <td>${routeStep.waypoints.length}</td>
             <td>
-                <input class="form-check-input" type="radio" name="current-route" value="${count}" ${currentRouteStep == count ? "checked" : ""}>
+                <input class="form-check-input" type="radio" name="current-route" value="${count}" ${currentRouteStep == count && !viewCompleteRoute ? "checked" : ""}>
             </td>
             <td>
-                <div class="input-group input-group-sm">
-                    <input type="number" class="form-control input-sm loop-quantity-input" ${routeStep.loop ? "" : "disabled"}>
-                </div>     
+                <div class="form-check">
+                    <input class="form-check-input loop-step-table-cb" value="${count}" type="checkbox" ${route[count].loop ? "checked" : ""}>
+                    <div class="form-group input-group-sm"> 
+                        <input type="number" class="form-control input-sm loop-quantity-input" id="loop-quantity-input-${count}" step="${count}" ${routeStep.loop ? "" : "disabled"}>
+                    </div>   
+                </div>
             </td>
             `
             tableBody[0].appendChild(row);
             
             count++;
         });
+
         const radioInputs = $('input[type=radio][name=current-route]');
         radioInputs.off("change");
-        radioInputs.on("change",function() {
-            currentRouteStep = parseInt(($(this).val()));
-            redraw();
+        radioInputs.on("change", function() {
+            changeCurrentStep(($(this).val()));
         });
-        
+
+        const loopCbs = $('.loop-step-table-cb');
+        loopCbs.off("change");
+        loopCbs.on("change", function(e) {
+            const stepClicked = parseInt(e.target.value);
+            route[stepClicked].loop = e.target.checked;
+            if(stepClicked == currentRouteStep){
+                $("#loop-step-cb").prop("checked", e.target.checked);
+            }
+            $(`#loop-quantity-input-${stepClicked}`).prop("disabled", !e.target.checked);
+        });  
+
+        const deleteBtns = $(".delete-step-btn");
+        deleteBtns.off("click");
+        deleteBtns.on("click", (e) => {
+            const stepClicked = parseInt(e.currentTarget.value);
+            route.splice(stepClicked, 1);
+            if(stepClicked<=currentRouteStep && currentRouteStep!=0) currentRouteStep--;
+            if(route.length==0) setViewCompleteRoute(true);
+            redraw();
+            updateManageTable();
+        });
+
+        const moveRouteBtns = $(".move-route-btn");
+        moveRouteBtns.off("click");
+        moveRouteBtns.on("click", (e) => {
+            const stepClicked = parseInt(e.currentTarget.value);
+            const increment = parseInt(e.currentTarget.getAttribute("increment"));
+            if(stepClicked+increment >= 0 && stepClicked+increment < route.length){
+                moveArrayElement(route, stepClicked, stepClicked+increment);
+                changeCurrentStep(stepClicked+increment);
+                updateManageTable();
+                redraw();
+            }
+        });
+
+        const loopQuantityInputs = $(".loop-quantity-input");
+        loopQuantityInputs.off("change");
+        loopQuantityInputs.on("change", (e) => {
+            const stepChanged = parseInt(e.target.getAttribute("step"));
+            route[stepChanged].loopQuantity = parseInt(e.target.value); 
+        });
     }
 
-    
+    function setViewCompleteRoute(to, update = true){
+        viewCompleteRoute = to;
+        if(update)$("#view-complete-radio").click();
+        if(to){
+            $("#waypoints-content").css("display","none");
+            $("#waypoints-content-ro").css("display","block");
+        }else{
+            $("#waypoints-content-ro").css("display","none");
+            $("#waypoints-content").css("display","block");
+        }
+        if(update)updateManageTable();
+    }
+
+    function changeCurrentStep(step){
+        if(step!="all"){
+            setViewCompleteRoute(false,false);
+            currentRouteStep = parseInt(step);
+            lastPlacedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].length-1];
+            $("#loop-step-cb").prop("checked", route[currentRouteStep].loop);
+            $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+        }else{
+            setViewCompleteRoute(true,false);
+        }
+        
+        redraw();
+    }
 
     $("#new-step-btn").click((e) => {
         route.push({
             loop: false,
+            loopQuantity: 0,
             waypoints: []
         });
-        currentRouteStep = route.length-1;
+        changeCurrentStep(route.length-1);
         updateManageTable();
     });
 
+    $("#remove-all-steps-btn").click(()=>{
+        if(route.length==0){
+            alert("There is no waypoint to remove");
+            return;
+        }
+        if(confirm("Remove all waypoints?")){
+            route.length=0;
+            setViewCompleteRoute(true);
+            $("#waypoints-display").text(`Quantity: 0`);
+        }
+        redraw();
+    });
+
+    $("#loop-route-cb").change((e) => {
+        loopRoute = e.target.checked;
+    });
+
+    function getExportableRoute(relativeTo = "game"){
+        const output = {
+            "relativeTo": relativeTo,
+            "loop": loopRoute,
+            "route":[]
+        };
+        if(relativeTo == "game"){
+            route.forEach((routeStep) => {
+                const stepToPush = {
+                    loop: routeStep.loop,
+                    loopQuantity: routeStep.loopQuantity,
+                    waypoints: []
+                }
+                routeStep.waypoints.forEach((wp) => {
+                    stepToPush.waypoints.push(translateToGame(wp));
+                });
+                output.route.push(stepToPush);
+            });
+        }else{
+            output.route = route;
+        }
+        return output;
+    }
+
+    $("#export-form").submit((e)=>{
+        e.preventDefault();
+        const form = e.target;
+        const relativeTo = form.elements['export-relative-to'].value;
+
+        if(!route[currentRouteStep].waypoints.length){
+            alert("There is no waypoint to export");
+            return;
+        }
+        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
+            alert("No calibration was done");
+            return;
+        }
+        let fileName = form.elements['export-filename'].value
+        if(!fileName.endsWith(".json")) fileName+=".json";
+
+        const dataToExport = getExportableRoute(relativeTo);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+        const dlAnchorElem = $('#wps-json-download-a');
+        dlAnchorElem.attr("href", dataStr);
+        dlAnchorElem.attr("download", fileName);
+        dlAnchorElem[0].click();
+
+        form.reset();  
+        $("#modal-out-export").css("display","none");
+    })
+
+    $("#import-form").submit((e)=>{
+        e.preventDefault();
+        if(!confirm("This will erase the current route, are you sure?")){
+            return;
+        }
+
+        const form = e.target;
+        const relativeTo = form.elements['import-relative-to'].value;
+        if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
+            alert("No calibration was done");
+            return;
+        }
+        let reader = new FileReader();
+        reader.onload = (data) => {
+            const dataParsed = JSON.parse(data.target.result);
+
+            if(dataParsed.relativeTo !== relativeTo){
+                alert(`This json is relative to "${dataParsed.relativeTo}" and not "${relativeTo}", select the correct option and try again`);
+                return;
+            }
+
+            if(relativeTo=="game" && jQuery.isEmptyObject(calibration)){
+                alert("No calibration was done");
+                return;
+            }
+
+            route.length = 0;
+
+            if(relativeTo == "game"){
+                dataParsed.route.forEach(routeStep => {
+                    const stepToPush = {
+                        loop: routeStep.loop,
+                        loopQuantity: routeStep.loopQuantity,
+                        waypoints: []
+                    }
+                    routeStep.waypoints.forEach(wp => {
+                        stepToPush.waypoints.push(translateToMap(wp));
+                    });
+                    route.push(stepToPush);
+                });
+            }else{
+                route = dataParsed.route;
+            }
+
+            loopRoute = dataParsed.loop;
+
+            currentRouteStep = 0;
+            updateManageTable();
+            $("#loop-route-cb").prop("checked", loopRoute);
+            $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);  
+            $("#modal-out-import").css("display","none");
+            
+            form.reset();  
+            redraw();
+        }
+        reader.readAsText(form.elements['file-to-import'].files[0]);
+    });
+
+    $("#send-btn").click(()=>{
+        if(jQuery.isEmptyObject(calibration)){
+            alert("No calibration was done");
+            return;
+        }
+        $.ajax({
+            url: '/',
+            type: 'post',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: JSON.stringify(getExportableRoute())
+        });
+    });
+
+
+
     //-------------------------------------------------
+
+    function moveArrayElement(array, oldIndex, newIndex){
+        const carrier = array[oldIndex];
+        array[oldIndex] = array[newIndex];
+        array[newIndex] = carrier;
+    }
+
 
     function redraw(){
         var p1 = ctx.transformedPoint(0,0);

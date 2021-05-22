@@ -39,51 +39,54 @@
                     <div class="waypoints-div-wrapper div-section-wrapper">
                         <div class="waypoints-div div-section">
                             <h3>Waypoints</h3>
-                            <div class="row mb-2">
-                                <div class="col">
-                                    <div id="waypoints-display-wrapper">
-                                        <span id="waypoints-display">Quantity: 0</span>
-                                    </div>
-                                </div>
+                            <div id="waypoints-content-ro" style="display:none;">
+                                <strong>View-only mode</strong>
+                                <p>Choose a route step in "Manage Route" to be able to edit again</p>
+                                <button id="open-manage-modal-ro" class="btn btn-secondary open-modal-btn open-manage-modal-btn" modal="modal-out-manage">Manage Route</button>
                             </div>
-                            <div class="form-group mb-2">
-                                <label for="wp-distance-input">Distance between wps</label>
-                                <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters">
-                            </div> 
-                            <div class="row mb-2">  
-                                <div class="col">
-                                    <input class="form-check-input" type="checkbox" id="loop-cb">
-                                    <label class="" for="loop-cb">
-                                        Loop route
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="col">
-                                    <button class="btn btn-info w-100" id="revert-btn">Revert</button>
-                                </div>
-                            </div>
-                            <div class="row mb-2">  
-                                <div class="col">
-                                    <div class="remove-wrapper">
-                                        <label>Remove WP</label>
-                                        <div class="btn-group remove-btn-group" role="group">
-                                            <button type="button" class="btn btn-warning remove-btn" id="remove-first-btn">First</button>
-                                            <button type="button" class="btn btn-danger remove-btn" id="remove-all-btn">All</button>
-                                            <button type="button" class="btn btn-warning remove-btn" id="remove-last-btn">Last</button>
+                            <div id="waypoints-content">
+                                <div class="row mb-2">
+                                    <div class="col">
+                                        <div id="waypoints-display-wrapper">
+                                            <span id="waypoints-display">Quantity: 0</span>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row mb-2">
-                                <div class="btn-group-vertical">
-                                    <button id="open-manage-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-manage">Manage Route</button>
-                                    <button id="open-import-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-import">Import Route</button>  
-                                    <button id="open-export-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-export">Export Route</button>  
-                                    <button id="send-btn" class="btn btn-success">Send to Server</button>
+                                <div class="form-group mb-2">
+                                    <label for="wp-distance-input">Distance between wps</label>
+                                    <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters">
                                 </div> 
+                                <div class="row mb-2">  
+                                    <div class="col">
+                                        <input class="form-check-input" type="checkbox" id="loop-step-cb">
+                                        <label class="" for="loop-step-cb">
+                                            Loop step
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col">
+                                        <button class="btn btn-info w-100" id="revert-btn">Revert</button>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">  
+                                    <div class="col">
+                                        <div class="remove-wrapper">
+                                            <label>Remove WP</label>
+                                            <div class="btn-group remove-btn-group" role="group">
+                                                <button type="button" class="btn btn-warning remove-btn" id="remove-first-btn">First</button>
+                                                <button type="button" class="btn btn-danger remove-btn" id="remove-all-btn">All</button>
+                                                <button type="button" class="btn btn-warning remove-btn" id="remove-last-btn">Last</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="btn-group-vertical">
+                                        <button id="open-manage-modal" class="btn btn-secondary open-modal-btn open-manage-modal-btn" modal="modal-out-manage">Manage Route</button>
+                                    </div> 
+                                </div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -192,7 +195,41 @@
                                 <tbody>
                                 </tbody>
                             </table>  
-                            <button class="btn btn-success" id="new-step-btn">New Step</button>      
+                            <div class="row mb-2">
+                                <div class="col text-start">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="loop-route-cb">
+                                        <label class="form-check-label" for="loop-route-cb">
+                                            Loop route
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" id="view-complete-radio" value="all" name="current-route" type="radio">
+                                        <label class="" for="view-complete-radio">
+                                            View complete route (View-only)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="btn-group-vertical">
+                                        <button class="btn btn-success step-managing-btn" id="new-step-btn">New Step</button>     
+                                        <button class="btn btn-danger step-managing-btn" id="remove-all-steps-btn">Remove All</button>     
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col">
+                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                        <button id="open-import-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-import">Import Route</button>  
+                                        <button id="open-export-modal" class="btn btn-secondary open-modal-btn" modal="modal-out-export">Export Route</button>  
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <button id="send-btn" class="btn btn-success">Send to Server</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div> 

@@ -1,12 +1,11 @@
-async.httpGet(3000,'/waypoint?info')
-async.httpGet(3000,'/waypoint?get=0')
-async.httpGet(3000,'/waypoint?get=1')
+async.httpGet(3000,'/get-directions/start')
+async.httpGet(3000,'/get-directions/next-waypoint')
+async.httpGet(3000,'/get-directions/next-waypoint')
 wpLoaded = false --true
 dataProcessed = false
 firstWp = true
 nextWpLoaded = false
 done=false
-currWp = 0
 wpX = 0
 wpY = 0
 nextWpX = 0
@@ -74,12 +73,8 @@ function onDraw()
 end
 
 function httpReply(port, request_body, response_body)
-	if(request_body == "/waypoint?info") then
-		loopInt, qtyWP = response_body:match("([^,]+),([^,]+)")
-		if(loopInt=='1') then loop = true
-		else loop = false end
-	else
-	    if(response_body~='404') then
+	if(request_body ~= "/get-directions/start") then
+	    if(response_body~='end') then
 	    	x,y = response_body:match("([^,]+),([^,]+)")
 	    	if(firstWp) then
 		    	wpX = tonumber(x)
@@ -92,12 +87,7 @@ function httpReply(port, request_body, response_body)
 		    	nextWaypointLoaded = true
 		    end
 	    else
-	    	if(loop) then
-				currWp = -1
-				async.httpGet(3000,'/waypoint?get=0')
-			else
-				done=true
-			end
+	    	done=true
 	    end
 	end
 end
@@ -116,10 +106,9 @@ function getDistance(x1,y1,x2,y2)
 end
 
 function nextWaypoint()
-	currWp = currWp+1
 	wpX = nextWpX
 	wpY = nextWpY
 	nextWaypointLoaded = false
-	async.httpGet(3000,'/waypoint?get='..currWp+1)
+	async.httpGet(3000,'/get-directions/next-waypoint')
 end
 

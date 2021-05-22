@@ -262,11 +262,9 @@ $(function(){
         redraw();
     });
 
-    let isPlacementReverted = false;
     $("#revert-btn").click(()=>{
-        isPlacementReverted = !isPlacementReverted;
         route[currentRouteStep].waypoints.reverse();
-        lastDrawedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
+        lastPlacedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
         redraw();
     });
 
@@ -639,6 +637,17 @@ $(function(){
         });
         changeCurrentStep(route.length-1);
         updateManageTable();
+    });
+
+    $("#revert-route-btn").click(() => {
+        currentRouteStep = route.length-currentRouteStep-1;
+        route.forEach((routeStep) => {
+            routeStep.waypoints.reverse();
+        });
+        route.reverse();
+        lastPlacedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
+        updateManageTable();
+        redraw();
     });
 
     $("#remove-all-steps-btn").click(()=>{

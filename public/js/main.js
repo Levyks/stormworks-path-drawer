@@ -543,7 +543,7 @@ $(function(){
                 <div class="form-check">
                     <input class="form-check-input loop-step-table-cb" value="${count}" type="checkbox" ${route[count].loop ? "checked" : ""}>
                     <div class="form-group input-group-sm"> 
-                        <input type="number" class="form-control input-sm loop-quantity-input" id="loop-quantity-input-${count}" step="${count}" ${routeStep.loop ? "" : "disabled"}>
+                        <input type="text" class="form-control input-sm loop-quantity-input" value="&#8734" id="loop-quantity-input-${count}" step="${count}" ${routeStep.loop ? "" : "disabled"}>
                     </div>   
                 </div>
             </td>
@@ -596,9 +596,21 @@ $(function(){
 
         const loopQuantityInputs = $(".loop-quantity-input");
         loopQuantityInputs.off("change");
+        loopQuantityInputs.off("focus");
+        loopQuantityInputs.off("blur");
         loopQuantityInputs.on("change", (e) => {
             const stepChanged = parseInt(e.target.getAttribute("step"));
             route[stepChanged].loopQuantity = parseInt(e.target.value); 
+        });
+        
+        loopQuantityInputs.on("focus", (e) => {
+            e.target.type = "number";
+        });
+        loopQuantityInputs.on("blur", (e) => {
+            if(e.target.value == 0 || isNaN(e.target.value)){
+                e.target.type = "text";
+                e.target.value = "∞";
+            }
         });
     }
 
@@ -639,16 +651,6 @@ $(function(){
         updateManageTable();
     });
 
-    $("#revert-route-btn").click(() => {
-        currentRouteStep = route.length-currentRouteStep-1;
-        route.forEach((routeStep) => {
-            routeStep.waypoints.reverse();
-        });
-        route.reverse();
-        lastPlacedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
-        updateManageTable();
-        redraw();
-    });
 
     $("#remove-all-steps-btn").click(()=>{
         if(route.length==0){
@@ -660,6 +662,29 @@ $(function(){
             setViewCompleteRoute(true);
             $("#waypoints-display").text(`Quantity: 0`);
         }
+        redraw();
+    });
+
+    $("#revert-route-btn").click(() => {
+        currentRouteStep = route.length-currentRouteStep-1;
+        route.forEach((routeStep) => {
+            routeStep.waypoints.reverse();
+        });
+        route.reverse();
+        lastPlacedWaypoint = route[currentRouteStep].waypoints[route[currentRouteStep].waypoints.length-1];
+        updateManageTable();
+        redraw();
+    });
+
+    $("#clone-revert-route-btn").click(() => {
+        route.slice().reverse().forEach((routeStep) => {
+            route.push({
+                loop: routeStep.loop,
+                loopQuantity: routeStep.loopQuantity,
+                waypoints: routeStep.waypoints.slice().reverse()
+            });
+        });;
+        updateManageTable();
         redraw();
     });
 

@@ -48,7 +48,7 @@ function getNextWaypoint(req, res){
 
     const waypoint = step.waypoints[currentWpOnStep];
     if(!waypoint){
-        if(step.loop && step.loopQuantity == 0 || step.loopQuantity < stepLooped){
+        if(step.loop && step.loopQuantity == 0 ||  stepLooped < step.loopQuantity){
             currentWpOnStep = 0;
             stepLooped++;
             getNextWaypoint(req, res);

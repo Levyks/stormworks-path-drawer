@@ -1,172 +1,179 @@
-$(function(){
+let route = [
+    {
+        loop: false,
+        loopQuantity: 0,
+        waypoints: []
+    },
+];
+let currentRouteStep = 0;
+let viewCompleteRoute = false;
+let loopRoute = false;
 
-    function SVGtoCommonObj(pt){
-        return {
-            x: pt.x,
-            y: pt.y
-        }
+let lastPlacedWaypoint = {};
+let lastDrawedWaypoint = {};
+
+let allowMove=true;
+
+function addWaypoint(pt){
+
+    pt=SVGtoCommonObj(pt);
+
+    route[currentRouteStep].waypoints.push(pt);
+
+    drawWP(pt)
+
+    lastPlacedWaypoint = pt;
+
+    //$("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+}
+
+function SVGtoCommonObj(pt){
+    return {
+        x: pt.x,
+        y: pt.y
+    }
+}
+
+function drawLine(p1,p2){
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.stroke();
+    ctx.closePath();
+}
+
+function drawTriangleInTheMiddle(pStart,pEnd){
+    const distance = getDistance(pStart,pEnd);
+    const triangleSize = 8-zoomBalance/6;
+
+    const avgPt = {
+        x: (pEnd.x+pStart.x)/2,
+        y: (pEnd.y+pStart.y)/2
     }
 
-    function drawLine(p1,p2){
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(p1.x,p1.y);
-        ctx.lineTo(p2.x,p2.y);
-        ctx.stroke();
-        ctx.closePath();
+    const deltaX = triangleSize * (pEnd.x-pStart.x) / distance;
+    const deltaY = triangleSize * (pEnd.y-pStart.y) / distance;
+
+    const p1 = {
+        x: avgPt.x+deltaX,
+        y: avgPt.y+deltaY
     }
 
-    function drawTriangleInTheMiddle(pStart,pEnd){
-        const distance = getDistance(pStart,pEnd);
-        const triangleSize = 8-zoomBalance/6;
-
-        const avgPt = {
-            x: (pEnd.x+pStart.x)/2,
-            y: (pEnd.y+pStart.y)/2
-        }
-
-        const deltaX = triangleSize * (pEnd.x-pStart.x) / distance;
-        const deltaY = triangleSize * (pEnd.y-pStart.y) / distance;
-
-        const p1 = {
-            x: avgPt.x+deltaX,
-            y: avgPt.y+deltaY
-        }
-
-        const p2 = {
-            x: avgPt.x + (-(deltaX/2)-((Math.sqrt(3)/2)*deltaY)),
-            y: avgPt.y + (((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
-        }
-
-        const p3 = {
-            x: avgPt.x + (-(deltaX/2)+((Math.sqrt(3)/2)*deltaY)),
-            y: avgPt.y + (-((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
-        }
-        
-        ctx.moveTo(p1.x,p1.y);
-        ctx.lineTo(p2.x,p2.y);
-        ctx.lineTo(p3.x,p3.y);
-        ctx.lineTo(p1.x,p1.y);
-
-        ctx.fillStyle="yellow";
-        ctx.fill()
+    const p2 = {
+        x: avgPt.x + (-(deltaX/2)-((Math.sqrt(3)/2)*deltaY)),
+        y: avgPt.y + (((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
     }
 
-    function drawWP(pt, first = false, color = defaultWaypointColor){
-        const rectSize=8-zoomBalance/6;
-        ctx.fillStyle = color;
-        ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
-
-        if(!first) {
-            drawLine(lastDrawedWaypoint,pt);
-            drawTriangleInTheMiddle(lastDrawedWaypoint,pt);
-        }   
-        lastDrawedWaypoint = pt;  
-    }
-
-    function closeLoop(step){
-        drawLine(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
-        drawTriangleInTheMiddle(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
+    const p3 = {
+        x: avgPt.x + (-(deltaX/2)+((Math.sqrt(3)/2)*deltaY)),
+        y: avgPt.y + (-((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
     }
     
-    function addWaypoint(pt){
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.lineTo(p3.x,p3.y);
+    ctx.lineTo(p1.x,p1.y);
 
-        pt=SVGtoCommonObj(pt);
+    ctx.fillStyle="yellow";
+    ctx.fill()
+}
 
-        route[currentRouteStep].waypoints.push(pt);
+function drawWP(pt, first = false, color = defaultWaypointColor){
+    const rectSize=8-zoomBalance/6;
+    ctx.fillStyle = color;
+    ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
 
-        lastPlacedWaypoint = pt;
+    if(!first) {
+        drawLine(lastDrawedWaypoint,pt);
+        drawTriangleInTheMiddle(lastDrawedWaypoint,pt);
+    }   
+    lastDrawedWaypoint = pt;  
+}
 
-        $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+function closeLoop(step){
+    drawLine(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
+    drawTriangleInTheMiddle(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
+}
 
-        redraw();
-    }
 
-    function drawAllWPs(){
 
-        let count = 0
+function drawAllWPs(){
 
-        if(route.length){
-            if(!viewCompleteRoute){
+    let count = 0
 
-                if(currentRouteStep){
-                    const prevStepWPS = route[currentRouteStep-1].waypoints
-                    const lastWaypointFromPrevStep = prevStepWPS[prevStepWPS.length-1];
-                    if(lastWaypointFromPrevStep) drawWP(lastWaypointFromPrevStep, true, "orange");
-                }
+    if(route.length){
+        if(!viewCompleteRoute){
 
-                route[currentRouteStep].waypoints.forEach(wp => {
-                    let color;
-                    switch (count){
-                        case 0:
-                            color = "green";
-                            break; 
-                        case route[currentRouteStep].waypoints.length-1:
-                            color = "blue";
-                            break;
-                        default:
-                            color = defaultWaypointColor;
-                            break;
-                    }
-                            
-                    drawWP(wp, !(count || currentRouteStep), color);
-                    count+=1;
-
-                });
-
-                if(route[currentRouteStep].loop && route[currentRouteStep].waypoints.length>2) closeLoop(route[currentRouteStep]);
-
-                if(currentRouteStep<route.length-1){
-                    const nextStepWPS = route[currentRouteStep+1].waypoints
-                    const firstWaypointFromPrevStep = nextStepWPS[0];
-                    if(firstWaypointFromPrevStep) drawWP(firstWaypointFromPrevStep, false, "purple");  
-                }
-            }else{
-                let drawingStep = 0;
-                route.forEach((routeStep) => {
-                    const lastStep = drawingStep == route.length-1;
-                    let relativeCount = 0;
-                    routeStep.waypoints.forEach(wp => {
-                        let color;
-                        if(relativeCount==0){
-                            color = "green"; //FIRST WAYPOINT OF STEP
-                        }else if(relativeCount == route[drawingStep].waypoints.length-1){
-                            color="blue"; //LAST WAYPOINT OF STEP
-                        }else{
-                            color=defaultWaypointColor; //COMMON WAYPOINT
-                        }
-                        drawWP(wp, !count, color);
-                        count+=1;
-                        relativeCount+=1;
-                    });
-                    if(routeStep.loop && routeStep.waypoints.length>2) closeLoop(routeStep);
-                    drawingStep += 1;
-                });
-
+            if(currentRouteStep){
+                const prevStepWPS = route[currentRouteStep-1].waypoints
+                const lastWaypointFromPrevStep = prevStepWPS[prevStepWPS.length-1];
+                if(lastWaypointFromPrevStep) drawWP(lastWaypointFromPrevStep, true, "orange");
             }
+
+            route[currentRouteStep].waypoints.forEach(wp => {
+                let color;
+                switch (count){
+                    case 0:
+                        color = "green";
+                        break; 
+                    case route[currentRouteStep].waypoints.length-1:
+                        color = "blue";
+                        break;
+                    default:
+                        color = defaultWaypointColor;
+                        break;
+                }
+                        
+                drawWP(wp, !(count || currentRouteStep), color);
+                count+=1;
+
+            });
+
+            if(route[currentRouteStep].loop && route[currentRouteStep].waypoints.length>2) closeLoop(route[currentRouteStep]);
+
+            if(currentRouteStep<route.length-1){
+                const nextStepWPS = route[currentRouteStep+1].waypoints
+                const firstWaypointFromPrevStep = nextStepWPS[0];
+                if(firstWaypointFromPrevStep) drawWP(firstWaypointFromPrevStep, false, "purple");  
+            }
+        }else{
+            let drawingStep = 0;
+            route.forEach((routeStep) => {
+                const lastStep = drawingStep == route.length-1;
+                let relativeCount = 0;
+                routeStep.waypoints.forEach(wp => {
+                    let color;
+                    if(relativeCount==0){
+                        color = "green"; //FIRST WAYPOINT OF STEP
+                    }else if(relativeCount == route[drawingStep].waypoints.length-1){
+                        color="blue"; //LAST WAYPOINT OF STEP
+                    }else{
+                        color=defaultWaypointColor; //COMMON WAYPOINT
+                    }
+                    drawWP(wp, !count, color);
+                    count+=1;
+                    relativeCount+=1;
+                });
+                if(routeStep.loop && routeStep.waypoints.length>2) closeLoop(routeStep);
+                drawingStep += 1;
+            });
+
         }
     }
+}
 
-    const defaultWaypointColor = "red";
+const defaultWaypointColor = "red";
 
-    function getDistance(pt1,pt2){
-        return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
-    }
+function getDistance(pt1,pt2){
+    return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
+}
 
-    const cvWrapper = $("#canvasWrapper");
-    const canvas = $("#mainCanvas");
-    const canvasDOM = canvas[0]
-    const ctx = canvas[0].getContext("2d");
 
-    let dragged = false;
+let dragged = false;
 
-    var image = new Image();
-    image.src = "img/bigMap.png";
-    image.onload = ()=>{
-        redraw();
-    };
+$(function(){
 
-    let allowMove=true;
     $('input[type=radio][name=move-radio]').change((e)=>{
         allowMove = (e.target.value == "panNzoom");
     })
@@ -257,7 +264,6 @@ $(function(){
     });
 
     $("#reset-btn").click(()=>{
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
         zoomBalance = 0;
         redraw();
     });
@@ -301,58 +307,6 @@ $(function(){
     let lastPlacedWaypoint = {};
 
     /*-------------------------------------------------
-     * MOUSE EVENTS HANDLERS */
-
-    let dragStart;
-    let lastX;
-    let lastY;
-
-    canvas.on("mousedown", (evt) => {
-        document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
-        lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-        lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
-        dragStart = ctx.transformedPoint(lastX,lastY);
-        if(!allowMove && !markers.toPlace &&!viewCompleteRoute) addWaypoint(dragStart,route[currentRouteStep].waypoints.length);
-        dragged = false;
-    });
-
-    canvas.on("mousemove", (evt) => {
-        lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-        lastY = evt.offsetY || (evt.pageY - canvas.offsetTop);
-        dragged = true;
-        if (dragStart){
-            var pt = ctx.transformedPoint(lastX,lastY);
-            if (allowMove){
-                ctx.translate(pt.x-dragStart.x,pt.y-dragStart.y);
-                redraw();
-            }else{
-                if(getDistance(pt,lastPlacedWaypoint) > distanceBetweenWPs && !viewCompleteRoute){
-                    addWaypoint(pt);
-                }
-            }
-        }
-        
-    });
-
-    canvas.on("mouseup", (evt) => {
-        dragStart = null;
-		if (!dragged){
-            if(markers.toPlace && !allowMove){
-                lastX = evt.offsetX || (evt.pageX - canvas.offsetLeft);
-                lastY = evt.offsetY || (evt.pageY - canvas.offsetTop); 
-                var pt = ctx.transformedPoint(lastX,lastY);       
-                let marker = markers[markers.toPlace];
-                placeMarker(marker,pt);
-
-            }else{
-                zoom(evt.shiftKey ? -1 : 1 );
-            } 
-        } 
-    });
-
-    //-------------------------------------------------
-
-    /*-------------------------------------------------
      * CALIBRATION AND MARKERS */
 
     $("#calibrate-btn").click(calibrate);
@@ -382,6 +336,8 @@ $(function(){
         redraw();
     }
 
+
+/*
     function drawMarker(marker, pt = undefined){
         if(!pt){
             pt = marker.coords;
@@ -405,6 +361,7 @@ $(function(){
         if(markers.a.placed) drawMarker(markers.a);
         if(markers.b.placed) drawMarker(markers.b);
     }
+    */
 
     $("#calib-json-download-btn").click(()=>{
         if(jQuery.isEmptyObject(calibration)){
@@ -438,51 +395,6 @@ $(function(){
         }
         reader.readAsText(e.target.files[0]);
     });
-
-    //-------------------------------------------------
-
-
-    /*-------------------------------------------------
-     * ZOOM */
-
-    const minZoom = -12;
-    const maxZoom = 24;
-    var scaleFactor = 1.1;
-    var zoomBalance = 0;
-    var zoom = function(clicks, followMouse = true){
-        if(zoomBalance+clicks >= minZoom && zoomBalance+clicks <= maxZoom && allowMove){
-            zoomBalance+=clicks;
-            var pt={};
-            if(followMouse){
-                pt = ctx.transformedPoint(lastX,lastY);
-            }else{
-                pt.x = canvasDOM.width/2;
-                pt.y = canvasDOM.height/2;
-            }
-            ctx.translate(pt.x,pt.y);
-            var factor = Math.pow(scaleFactor,clicks);
-            ctx.scale(factor,factor);
-            ctx.translate(-pt.x,-pt.y);
-            redraw();
-        }
-    }
-   
-    $("#zoom-in").click(()=>{
-        zoom(3, false);
-    });
-
-    $("#zoom-out").click(()=>{
-        zoom(-3, false);
-    });
-
-    var handleScroll = function(evt){
-        var delta = evt.wheelDelta ? evt.wheelDelta/40 : evt.detail ? -evt.detail : 0;
-        if (delta) zoom(delta);
-        return evt.preventDefault() && false;
-    };
-
-    canvasDOM.addEventListener('DOMMouseScroll',handleScroll,false);
-    canvasDOM.addEventListener('mousewheel',handleScroll,false);
 
     //-------------------------------------------------
 
@@ -828,88 +740,5 @@ $(function(){
     }
 
 
-    function redraw(){
-        var p1 = ctx.transformedPoint(0,0);
-        var p2 = ctx.transformedPoint(canvasDOM.width,canvasDOM.height);
-        ctx.clearRect(p1.x,p1.y,p2.x-p1.x,p2.y-p1.y);
-
-        ctx.drawImage(image, 0 , 0);
-
-        drawAllWPs();
-        drawAllMarkers();
-    }
- 
-    function trackTransforms(ctx){
-		var svg = document.createElementNS("http://www.w3.org/2000/svg",'svg');
-		var xform = svg.createSVGMatrix();
-		ctx.getTransform = function(){ return xform; };
-		
-		var savedTransforms = [];
-		var save = ctx.save;
-		ctx.save = function(){
-			savedTransforms.push(xform.translate(0,0));
-			return save.call(ctx);
-		};
-		var restore = ctx.restore;
-		ctx.restore = function(){
-			xform = savedTransforms.pop();
-			return restore.call(ctx);
-		};
-
-		var scale = ctx.scale;
-		ctx.scale = function(sx,sy){
-			xform = xform.scaleNonUniform(sx,sy);
-			return scale.call(ctx,sx,sy);
-		};
-		var rotate = ctx.rotate;
-		ctx.rotate = function(radians){
-			xform = xform.rotate(radians*180/Math.PI);
-			return rotate.call(ctx,radians);
-		};
-		var translate = ctx.translate;
-		ctx.translate = function(dx,dy){
-			xform = xform.translate(dx,dy);
-			return translate.call(ctx,dx,dy);
-		};
-		var transform = ctx.transform;
-		ctx.transform = function(a,b,c,d,e,f){
-			var m2 = svg.createSVGMatrix();
-			m2.a=a; m2.b=b; m2.c=c; m2.d=d; m2.e=e; m2.f=f;
-			xform = xform.multiply(m2);
-			return transform.call(ctx,a,b,c,d,e,f);
-		};
-		var setTransform = ctx.setTransform;
-		ctx.setTransform = function(a,b,c,d,e,f){
-			xform.a = a;
-			xform.b = b;
-			xform.c = c;
-			xform.d = d;
-			xform.e = e;
-			xform.f = f;
-			return setTransform.call(ctx,a,b,c,d,e,f);
-		};
-		var pt  = svg.createSVGPoint();
-		ctx.transformedPoint = function(x,y){
-			pt.x=x; pt.y=y;
-			return pt.matrixTransform(xform.inverse());
-		}
-
-        ctx.reverseTransformedPoint = function(x,y){
-			pt.x=x; pt.y=y;
-			return pt.matrixTransform(xform);
-		}
-	}
-    trackTransforms(ctx); 
-    
-    function resizeCanvas(){
-        canvasDOM.width = cvWrapper.width();
-        canvasDOM.height = cvWrapper.height();
-
-        redraw();
-    }
-
-    $(window).resize(resizeCanvas);
-    
-    resizeCanvas();
 
 });

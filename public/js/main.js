@@ -10,29 +10,24 @@ let viewCompleteRoute = false;
 let loopRoute = false;
 
 let lastPlacedWaypoint = {};
-let lastDrawedWaypoint = {};
 
 let allowMove=true;
 
 function addWaypoint(pt){
+    drawWp(pt, route[currentRouteStep].waypoints.length == 0);
+    drawWpLineTo(pt);
 
-    pt=SVGtoCommonObj(pt);
+    if(route[currentRouteStep].waypoints.length>0){
+        drawArrow(lastPlacedWaypoint, pt);
+    }
 
     route[currentRouteStep].waypoints.push(pt);
-
-    drawWP(pt)
 
     lastPlacedWaypoint = pt;
 
     //$("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
 }
 
-function SVGtoCommonObj(pt){
-    return {
-        x: pt.x,
-        y: pt.y
-    }
-}
 
 function drawLine(p1,p2){
     ctx.lineWidth = 1;
@@ -303,7 +298,6 @@ $(function(){
         console.log(distanceBetweenWPs);
     })
 
-    let lastDrawedWaypoint = {};
     let lastPlacedWaypoint = {};
 
     /*-------------------------------------------------
@@ -330,7 +324,7 @@ $(function(){
     }
 
     function placeMarker(marker, pt){
-        marker.coords = SVGtoCommonObj(pt);
+        marker.coords = pt;
         marker.placed = true;
         resetPlaceMarkerButtons();
         redraw();

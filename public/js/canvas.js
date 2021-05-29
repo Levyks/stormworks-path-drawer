@@ -1,32 +1,84 @@
+//CONSTS
+
+const wpRectSize=16
+const firstWpColor =  "green";
+const middleWpColor = "red";
+const lastWpColor = "blue";
+
+const arrowLength = 15;
+const arrowWidth = 15;
+const arrowColor = "yellow";
+
+//-------
+
+let lastDrawedWaypoint;
+
+
 function getDistance(pt1,pt2){
     return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
 }
 
-function drawWP(pt, first = false, color = defaultWaypointColor){
-    const rectSize=16
-    
+function drawWp(pt, first=false){
+    console.log(first);
+    const color = first ? firstWpColor : lastWpColor;
+
     var wpRect = new Konva.Rect({
-        x: pt.x,
-        y: pt.y,
-        width: rectSize,
-        height: rectSize,
-        fill: 'red'
+        x: pt.x-wpRectSize/2,
+        y: pt.y-wpRectSize/2,
+        width: wpRectSize,
+        height: wpRectSize,
+        fill: color,
     });
 
-    waypointsLayer.add(wpRect);
+    if(lastDrawedWaypoint && lastDrawedWaypoint.fill() != firstWpColor) lastDrawedWaypoint.fill(middleWpColor);
 
-    /*
-    if(!first) {
-        drawLine(lastDrawedWaypoint,pt);
-        drawTriangleInTheMiddle(lastDrawedWaypoint,pt);
-    } 
-    */  
-    lastDrawedWaypoint = pt;  
+    waypointsLayer.add(wpRect);
+  
+    lastDrawedWaypoint = wpRect;  
 }
+
+function drawWpLineTo(pt){
+    newPointsArray = waypointsLine.points().concat([pt.x, pt.y]);
+    waypointsLine.points(newPointsArray);
+}
+
+function drawArrow(pt1, pt2){
+    const distance = getDistance(pt1,pt2)
+    const ratio = (distance+arrowLength)/(2*distance);
+    var arrow = new Konva.Arrow({
+        x: pt1.x,
+        y: pt1.y,
+        points: [0, 0, (pt2.x-pt1.x)*ratio, (pt2.y-pt1.y)*ratio],
+        pointerLength: arrowLength,
+        pointerWidth: arrowWidth,
+        fill: arrowColor,
+    });
+
+    waypointsLayer.add(arrow);
+}
+
+function drawAllWps(wpArray){
+    waypointsLayer.clear();
+    let count = 0
+    wpArray.forEach(wp => {
+        drawWp(wp, count == 0);
+        count+=1;
+    });
+}
+
+
 
 let mapLayer = new Konva.Layer();
 let waypointsLayer = new Konva.Layer();
 let markersLayer = new Konva.Layer();
+
+let waypointsLine = new Konva.Line({
+    stroke: 'black',
+    strokeWidth: 5,
+    points: [],
+});
+
+waypointsLayer.add(waypointsLine);
 
 
 $(function(){
@@ -96,7 +148,6 @@ $(function(){
     let isDragging=false;
 
     stage.on('mousedown', function (e) {
-        console.log(e.type)
         if(allowMove) return;
         isDragging=true;
         const pos = stage.getRelativePointerPosition();
@@ -107,7 +158,6 @@ $(function(){
         isDragging=false;
     });
 
-    // and core function - drawing
     stage.on('dragmove', function () {
         if(allowMove || !isDragging) return;
         const pos = stage.getRelativePointerPosition();
@@ -115,10 +165,6 @@ $(function(){
             addWaypoint(pos);
         }
     });
-
-   drawWP({x:20, y: 20});
-   drawWP({x:20, y: 1980});
-
     
     function resizeCanvas(){
         stage.width(cvWrapper.width());

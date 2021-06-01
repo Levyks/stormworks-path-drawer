@@ -13,30 +13,30 @@
         <div class="row main-row">
             <div id="canvasWrapper" class="col-10"></div>
             <div class="lateral-menu col-2 d-flex flex-column">
-                <div class="row">
-                    <div class="btn-group-vertical mb-3">
+                <div class="row mb-3">
+                    <div class="btn-group-vertical">
                         <button class="btn btn-primary" id="zoom-in"><b>+</b></button>
                         <button class="btn btn-primary" id="zoom-out"><b>-</b></button>
                     </div>
                 </div>
-                <div class="row mb-2">
+                <div class="row mb-3">
                     <div class="allow-move-div-wrapper div-section-wrapper">
                         <div class="allow-move-div div-section">
                             <div class="form-check d-inline toolbar-tool-div">
-                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" id="pan-move-radio" value="pan" checked>
-                                <label class="form-check-label btn btn-info" for="pan-move-radio" title="Pan">
+                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" value="pan" id="pan-toolbar-radio" checked>
+                                <label class="form-check-label btn btn-info" for="pan-toolbar-radio" title="Pan">
                                     <i class="fa fa-arrows-alt"></i>
                                 </label>
                             </div>
                             <div class="form-check d-inline toolbar-tool-div">
-                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" value="placeWp" id="plcwp-move-radio">
-                                <label class="form-check-label btn btn-success" for="plcwp-move-radio" title="Place Waypoints">
+                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" value="placeWp" id="placewp-toolbar-radio">
+                                <label class="form-check-label btn btn-success" for="placewp-toolbar-radio" title="Place Waypoints">
                                     <i class="fa fa-map-marker"></i>
                                 </label>
                             </div>
                             <div class="form-check d-inline toolbar-tool-div">
-                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" value="placeMk" id="plcmk-move-radio" disabled>
-                                <label class="form-check-label btn btn-warning" for="plcmk-move-radio" title="Place Markers">
+                                <input class="form-check-input btn-check" type="radio" name="toolbar-radio" value="placeMk" id="placemk-toolbar-radio" disabled>
+                                <label class="form-check-label btn btn-warning" for="placemk-toolbar-radio" title="Place Markers">
                                     <i class="fa fa-thumb-tack"></i>
                                 </label>
                             </div>
@@ -61,8 +61,8 @@
                                     </div>
                                 </div>
                                 <div class="form-group mb-2">
-                                    <label for="wp-distance-input">Distance between wps</label>
-                                    <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters">
+                                    <label for="wp-distance-input" value="You need to calibrate first">Distance between wps</label>
+                                    <input type="number" class="form-control" id="wp-distance-input" placeholder="in meters" title="Calibrate first" disabled>
                                 </div> 
                                 <div class="row mb-2">  
                                     <div class="col">

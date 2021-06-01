@@ -31,8 +31,7 @@ let loopRoute = false;
 
 let lastPlacedWaypoint = {};
 
-let allowMove = true;
-let allowMkPlacing = false;
+let choosenTool = 'pan';
 
 function addWaypoint(pt){
     drawWp(pt, lastPlacedWaypoint, route[currentRouteStep].waypoints.length==0);
@@ -63,31 +62,25 @@ function placeMarker(markerId, pt){
 function resetPlaceMarkerButtons(){
     markers.toPlace = false;
 
-    allowMkPlacing = false;
-    allowMove = true;
+    chooseTool("pan");
 
-    $("#pan-move-radio").prop("checked",true);
-    $("#plcmk-move-radio").prop("disabled",true);  
+    $("#placemk-toolbar-radio").prop("disabled",true);  
 
     $(".place-marker").prop('checked', false);
     $(".place-marker-label").text("Place it");
 }
 
-$(function(){
+function chooseTool(tool) {
+    console.log(tool, "#"+tool.toLowerCase() + "-toolbar-radio")
+    choosenTool = tool;
 
+    $("#" + tool.toLowerCase() + "-toolbar-radio").prop("checked",true);
+}
+
+
+$(function(){
     $('input[type=radio][name=toolbar-radio]').change((e)=>{
-        allowMove = false;
-        allowMkPlacing = false;
-        switch(e.target.value){
-            case "pan":
-                allowMove = true;
-                break;
-            case "placeMk":
-                allowMkPlacing = true;
-                break;
-            default:
-                break;
-        }
+        chooseTool(e.target.value);
     })
 
     $("#loop-step-cb").change((e)=>{
@@ -109,11 +102,10 @@ $(function(){
 
             markers.toPlace = e.target.getAttribute('key');
 
-            allowMkPlacing = true;
-            allowMove = false;
+            chooseTool("placeMk");
             
-            $("#plcmk-move-radio").prop("disabled",false);
-            $("#plcmk-move-radio").prop("checked",true);
+            $("#placemk-toolbar-radio").prop("disabled",false);
+
             
             $(e.target).closest($(".modal-outside")).css("display","none");
         }
@@ -221,8 +213,12 @@ $(function(){
         calibration.constY = markers.a.inGameCoords.y - (markers.a.coords.y*calibration.ratioY);
 
         console.log(calibration);
-        
+
+        $("#wp-distance-input").prop("disabled", false);
+        $("#wp-distance-input").prop("title", "");
+
     }
+
 
 
 
@@ -233,7 +229,7 @@ $(function(){
             pt = marker.coords;
         }
         const baseSize = 8;
-        const crossSize = (baseSize*3)-zoomBalance/4
+        const crossSize = (baseScize*3)-zoomBalance/4
         ctx.lineWidth = 4 - zoomBalance/8;
         ctx.beginPath();
         ctx.moveTo(pt.x-(crossSize/2),pt.y);
@@ -272,15 +268,20 @@ $(function(){
     $("#calib-json-input").change((e)=>{
         let reader = new FileReader();
         reader.onload = (data) => {
-            const importedData = JSON.parse(data.target.result);        
+            const importedData = JSON.parse(data.target.result);    
+
             markers = importedData.markers;
-            calibration = importedData.calibration
+
             $("#marker-a-x").val(markers.a.inGameCoords.x); 
             $("#marker-a-y").val(markers.a.inGameCoords.y);
             $("#marker-b-x").val(markers.b.inGameCoords.x);
             $("#marker-b-y").val(markers.b.inGameCoords.y);
+
+            drawMarker(markers.a);
+            drawMarker(markers.b);
+
             calibrate(); 
-            redraw();
+
             $("#modal-out-calib").css("display","none");
         }
         reader.readAsText(e.target.files[0]);
@@ -410,7 +411,9 @@ $(function(){
     function setViewCompleteRoute(to, update = true){
         viewCompleteRoute = to;
         if(update)$("#view-complete-radio").click();
+        $("#placewp-toolbar-radio").prop("disabled", to);
         if(to){
+            chooseTool("pan");
             $("#waypoints-content").css("display","none");
             $("#waypoints-content-ro").css("display","block");
         }else{

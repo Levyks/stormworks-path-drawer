@@ -257,7 +257,7 @@ $(function(){
         height: cvWrapper.height(),
         draggable: true,
         dragBoundFunc: function (pos, e) {
-            return allowMove ? pos : this.getAbsolutePosition();
+            return choosenTool == 'pan' ? pos : this.getAbsolutePosition();
         }
     });
     
@@ -277,22 +277,22 @@ $(function(){
 
     stage.on('mousedown', function (e) {
         isDragging=true;
-        if(allowMove || allowMkPlacing) return;
+        if(choosenTool != 'placeWp') return;
         const pos = stage.getRelativePointerPosition();
         addWaypoint(pos);
       });
 
     stage.on('mouseup', function () {
         isDragging=false;
-        if(allowMove) return;
-        if(allowMkPlacing && markers.toPlace){
+        if(choosenTool != 'placeMk') return;
+        if(markers.toPlace){
             const pos = stage.getRelativePointerPosition();
             placeMarker(markers.toPlace, pos);
         }
     });
 
     stage.on('dragmove', function () {
-        if(allowMove || allowMkPlacing) return;
+        if(choosenTool != 'placeWp') return;
         const pos = stage.getRelativePointerPosition();
         if(getDistance(pos, lastPlacedWaypoint)>50){
             addWaypoint(pos);

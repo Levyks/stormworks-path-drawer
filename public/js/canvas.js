@@ -209,11 +209,20 @@ function rescaleAllNodes(scale){
     });
 }
 
+function recenterMap(){
+    stage.scale({x: initialScale, y: initialScale});
+    stage.position({x: initialXPos, y: initialYPos});
+}
+
 let mapLayer = new Konva.Layer();
 let waypointsLayer = new Konva.Layer();
 let markersLayer = new Konva.Layer();
 
 let waypointsLine;
+
+let initialScale;
+let initialXPos;
+let initialYPos;
 
 const mapImg = new Image();
 mapImg.src = "img/bigMap.png";
@@ -226,12 +235,12 @@ mapImg.onload = ()=>{
         height: mapImg.height,
     });
 
-    const scale = Math.min(stage.width()/mapKvImg.width(), stage.height()/mapKvImg.height());
-    stage.scale({x:scale, y:scale});
+    initialScale = Math.min(stage.width()/mapKvImg.width(), stage.height()/mapKvImg.height());
+    stage.scale({x: initialScale, y: initialScale});
 
-    const xPos = (stage.width()-(mapKvImg.width()*scale))/2;
-    const yPos = (stage.height()-(mapKvImg.height()*scale))/2;
-    stage.position({x:xPos, y:yPos});
+    initialXPos = (stage.width()-(mapKvImg.width()*initialScale))/2;
+    initialYPos = (stage.height()-(mapKvImg.height()*initialScale))/2;
+    stage.position({x: initialXPos, y: initialYPos});
 
     mapLayer.add(mapKvImg);
 };
@@ -268,7 +277,7 @@ $(function(){
 
     stage.on('mousedown', function (e) {
         isDragging=true;
-        if(allowMove || markers.toPlace) return;
+        if(allowMove || allowMkPlacing) return;
         const pos = stage.getRelativePointerPosition();
         addWaypoint(pos);
       });
@@ -276,14 +285,14 @@ $(function(){
     stage.on('mouseup', function () {
         isDragging=false;
         if(allowMove) return;
-        if(markers.toPlace){
+        if(allowMkPlacing && markers.toPlace){
             const pos = stage.getRelativePointerPosition();
             placeMarker(markers.toPlace, pos);
         }
     });
 
     stage.on('dragmove', function () {
-        if(allowMove) return;
+        if(allowMove || allowMkPlacing) return;
         const pos = stage.getRelativePointerPosition();
         if(getDistance(pos, lastPlacedWaypoint)>50){
             addWaypoint(pos);

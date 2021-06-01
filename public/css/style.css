@@ -150,3 +150,13 @@ html, body {
 .step-managing-btn{
     padding: 2px 8px 2px 8px !important;
 }
+
+.toolbar-tool-div{
+    margin: 2px 2px 2px 2px !important;
+    padding: 0px !important;
+}
+
+.btn-check:checked+.btn{
+    border-color: #000 !important;
+    border-width: 3px;
+}

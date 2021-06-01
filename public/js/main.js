@@ -31,7 +31,8 @@ let loopRoute = false;
 
 let lastPlacedWaypoint = {};
 
-let allowMove=true;
+let allowMove = true;
+let allowMkPlacing = false;
 
 function addWaypoint(pt){
     drawWp(pt, lastPlacedWaypoint, route[currentRouteStep].waypoints.length==0);
@@ -60,15 +61,33 @@ function placeMarker(markerId, pt){
 }
 
 function resetPlaceMarkerButtons(){
-    markers.toPlace = false
+    markers.toPlace = false;
+
+    allowMkPlacing = false;
+    allowMove = true;
+
+    $("#pan-move-radio").prop("checked",true);
+    $("#plcmk-move-radio").prop("disabled",true);  
+
     $(".place-marker").prop('checked', false);
     $(".place-marker-label").text("Place it");
 }
 
 $(function(){
 
-    $('input[type=radio][name=move-radio]').change((e)=>{
-        allowMove = (e.target.value == "panNzoom");
+    $('input[type=radio][name=toolbar-radio]').change((e)=>{
+        allowMove = false;
+        allowMkPlacing = false;
+        switch(e.target.value){
+            case "pan":
+                allowMove = true;
+                break;
+            case "placeMk":
+                allowMkPlacing = true;
+                break;
+            default:
+                break;
+        }
     })
 
     $("#loop-step-cb").change((e)=>{
@@ -80,14 +99,22 @@ $(function(){
     $(".place-marker").change((e) => {
         const checkState = e.target.checked;
         resetPlaceMarkerButtons();
-        e.target.checked = checkState;
-
-        var label = $("label[for='" + e.target.id    + "']");
-
-        label.text(checkState ? "Click on it" : "Place it");
 
         if(checkState){
+            e.target.checked = checkState;
+
+            var label = $("label[for='" + e.target.id    + "']");
+    
+            label.text(checkState ? "Click on it" : "Place it");
+
             markers.toPlace = e.target.getAttribute('key');
+
+            allowMkPlacing = true;
+            allowMove = false;
+            
+            $("#plcmk-move-radio").prop("disabled",false);
+            $("#plcmk-move-radio").prop("checked",true);
+            
             $(e.target).closest($(".modal-outside")).css("display","none");
         }
     })
@@ -135,9 +162,8 @@ $(function(){
         redrawAllWps(route[currentRouteStep]);
     });
 
-    $("#reset-btn").click(()=>{
-        zoomBalance = 0;
-        redraw();
+    $("#recenter-btn").click(()=>{
+        recenterMap();
     });
 
     $("#revert-btn").click(()=>{

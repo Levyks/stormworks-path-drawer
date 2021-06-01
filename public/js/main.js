@@ -34,15 +34,8 @@ let lastPlacedWaypoint = {};
 let allowMove=true;
 
 function addWaypoint(pt){
-    drawWp(pt, route[currentRouteStep].waypoints.length == 0);
+    drawWp(pt, lastPlacedWaypoint, route[currentRouteStep].waypoints.length==0);
     
-    if(route[currentRouteStep].waypoints.length>0){
-        drawWpLineTo(pt);
-        drawArrow(lastPlacedWaypoint, pt);
-    }else{
-        startWpLine(pt);
-    }
-
     route[currentRouteStep].waypoints.push(pt);
 
     lastPlacedWaypoint = pt;
@@ -117,9 +110,9 @@ $(function(){
         }
         if(confirm("Remove all waypoints?")){
             route[currentRouteStep].waypoints.length=0;
-            $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
+            updateWaypointDisplayLabel();
+            clearAllWps();
         }
-        redraw();
     });
 
     $("#remove-first-btn").click(()=>{
@@ -129,7 +122,7 @@ $(function(){
         }
         route[currentRouteStep].waypoints.shift();
         $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
-        redraw();
+        redrawAllWps(route[currentRouteStep]);
     });
 
     $("#remove-last-btn").click(()=>{
@@ -139,7 +132,7 @@ $(function(){
         }
         route[currentRouteStep].waypoints.pop();
         $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
-        redraw();
+        redrawAllWps(route[currentRouteStep]);
     });
 
     $("#reset-btn").click(()=>{
@@ -181,8 +174,6 @@ $(function(){
         distanceBetweenWPs = e.target.value/averageRatio;
         console.log(distanceBetweenWPs);
     })
-
-    let lastPlacedWaypoint = {};
 
     /*-------------------------------------------------
      * CALIBRATION AND MARKERS */

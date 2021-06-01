@@ -29,7 +29,22 @@ function getDistance(pt1,pt2){
     return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
 }
 
-function drawWp(pt, first=false){
+function drawWp(pt, lastWp, first=false){
+
+
+    drawWpRect(pt, first);
+
+    if(first){
+        startWpLine(pt);
+    }else{
+        drawWpLineTo(pt);
+        drawArrow(lastWp, pt);
+    }
+
+
+}
+
+function drawWpRect(pt, first=false){
     const color = first ? firstWpColor : lastWpColor;
 
     var wpRect = new Konva.Rect({
@@ -55,7 +70,13 @@ function drawWpLineTo(pt){
 }
 
 function startWpLine(pt){
-    waypointsLine.points([pt.x, pt.y]);
+    waypointsLine = new Konva.Line({
+        stroke: 'black',
+        strokeWidth: pathLineStrokeWidth,
+        points: [pt.x, pt.y],
+    });
+    
+    waypointsLayer.add(waypointsLine);
 }
 
 function drawArrow(pt1, pt2){
@@ -94,13 +115,24 @@ function setCanvasPathClosedState(newState, wpArray) {
     }
 }
 
-function drawAllWps(wpArray){
+function clearAllWps(){
+    waypointsLayer.destroyChildren();
     waypointsLayer.clear();
+}
+
+function drawAllWps(route){
     let count = 0
-    wpArray.forEach(wp => {
-        drawWp(wp, count == 0);
+    let lastRedrawedWaypoint = {};
+    route.waypoints.forEach(wp => {
+        drawWp(wp, lastRedrawedWaypoint, count == 0);
+        lastRedrawedWaypoint = wp;
         count+=1;
     });
+}
+
+function redrawAllWps(route){
+    clearAllWps();
+    drawAllWps(route);
 }
 
 function drawMarker(marker){
@@ -181,13 +213,7 @@ let mapLayer = new Konva.Layer();
 let waypointsLayer = new Konva.Layer();
 let markersLayer = new Konva.Layer();
 
-let waypointsLine = new Konva.Line({
-    stroke: 'black',
-    strokeWidth: pathLineStrokeWidth,
-    points: [],
-});
-
-waypointsLayer.add(waypointsLine);
+let waypointsLine;
 
 const mapImg = new Image();
 mapImg.src = "img/bigMap.png";

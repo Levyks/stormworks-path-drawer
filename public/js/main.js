@@ -1,3 +1,4 @@
+
 let route = [
     {
         loop: false,
@@ -5,6 +6,25 @@ let route = [
         waypoints: []
     },
 ];
+
+let markers = {
+    a: {
+        placed: false,
+        coords: {},
+        inGameCoords: {},
+        label: "A",
+        canvasGroup: undefined,
+    },
+    b: {
+        placed: false,
+        coords: {},
+        inGameCoords: {},
+        label: "B",
+        canvasGroup: undefined,
+    },
+    toPlace: false
+};
+
 let currentRouteStep = 0;
 let viewCompleteRoute = false;
 let loopRoute = false;
@@ -15,157 +35,42 @@ let allowMove=true;
 
 function addWaypoint(pt){
     drawWp(pt, route[currentRouteStep].waypoints.length == 0);
-    drawWpLineTo(pt);
-
+    
     if(route[currentRouteStep].waypoints.length>0){
+        drawWpLineTo(pt);
         drawArrow(lastPlacedWaypoint, pt);
+    }else{
+        startWpLine(pt);
     }
 
     route[currentRouteStep].waypoints.push(pt);
 
     lastPlacedWaypoint = pt;
 
-    //$("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
-}
-
-
-function drawLine(p1,p2){
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(p1.x,p1.y);
-    ctx.lineTo(p2.x,p2.y);
-    ctx.stroke();
-    ctx.closePath();
-}
-
-function drawTriangleInTheMiddle(pStart,pEnd){
-    const distance = getDistance(pStart,pEnd);
-    const triangleSize = 8-zoomBalance/6;
-
-    const avgPt = {
-        x: (pEnd.x+pStart.x)/2,
-        y: (pEnd.y+pStart.y)/2
-    }
-
-    const deltaX = triangleSize * (pEnd.x-pStart.x) / distance;
-    const deltaY = triangleSize * (pEnd.y-pStart.y) / distance;
-
-    const p1 = {
-        x: avgPt.x+deltaX,
-        y: avgPt.y+deltaY
-    }
-
-    const p2 = {
-        x: avgPt.x + (-(deltaX/2)-((Math.sqrt(3)/2)*deltaY)),
-        y: avgPt.y + (((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
-    }
-
-    const p3 = {
-        x: avgPt.x + (-(deltaX/2)+((Math.sqrt(3)/2)*deltaY)),
-        y: avgPt.y + (-((Math.sqrt(3)/2)*deltaX) - (deltaY/2))
+    if(route[currentRouteStep].loop){
+        drawCloseLoopArrow(route[currentRouteStep].waypoints);
     }
     
-    ctx.moveTo(p1.x,p1.y);
-    ctx.lineTo(p2.x,p2.y);
-    ctx.lineTo(p3.x,p3.y);
-    ctx.lineTo(p1.x,p1.y);
-
-    ctx.fillStyle="yellow";
-    ctx.fill()
+    updateWaypointDisplayLabel();
 }
 
-function drawWP(pt, first = false, color = defaultWaypointColor){
-    const rectSize=8-zoomBalance/6;
-    ctx.fillStyle = color;
-    ctx.fillRect(pt.x-(rectSize/2), pt.y-(rectSize/2), rectSize, rectSize);
-
-    if(!first) {
-        drawLine(lastDrawedWaypoint,pt);
-        drawTriangleInTheMiddle(lastDrawedWaypoint,pt);
-    }   
-    lastDrawedWaypoint = pt;  
+function updateWaypointDisplayLabel(){
+    $("#waypoints-display").text(`Quantity: ${route[currentRouteStep].waypoints.length}`);
 }
 
-function closeLoop(step){
-    drawLine(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
-    drawTriangleInTheMiddle(step.waypoints[step.waypoints.length-1],step.waypoints[0]);
+function placeMarker(markerId, pt){
+    const marker = markers[markerId];
+    marker.coords = pt;
+    marker.placed = true;
+    drawMarker(marker);
+    resetPlaceMarkerButtons();
 }
 
-
-
-function drawAllWPs(){
-
-    let count = 0
-
-    if(route.length){
-        if(!viewCompleteRoute){
-
-            if(currentRouteStep){
-                const prevStepWPS = route[currentRouteStep-1].waypoints
-                const lastWaypointFromPrevStep = prevStepWPS[prevStepWPS.length-1];
-                if(lastWaypointFromPrevStep) drawWP(lastWaypointFromPrevStep, true, "orange");
-            }
-
-            route[currentRouteStep].waypoints.forEach(wp => {
-                let color;
-                switch (count){
-                    case 0:
-                        color = "green";
-                        break; 
-                    case route[currentRouteStep].waypoints.length-1:
-                        color = "blue";
-                        break;
-                    default:
-                        color = defaultWaypointColor;
-                        break;
-                }
-                        
-                drawWP(wp, !(count || currentRouteStep), color);
-                count+=1;
-
-            });
-
-            if(route[currentRouteStep].loop && route[currentRouteStep].waypoints.length>2) closeLoop(route[currentRouteStep]);
-
-            if(currentRouteStep<route.length-1){
-                const nextStepWPS = route[currentRouteStep+1].waypoints
-                const firstWaypointFromPrevStep = nextStepWPS[0];
-                if(firstWaypointFromPrevStep) drawWP(firstWaypointFromPrevStep, false, "purple");  
-            }
-        }else{
-            let drawingStep = 0;
-            route.forEach((routeStep) => {
-                const lastStep = drawingStep == route.length-1;
-                let relativeCount = 0;
-                routeStep.waypoints.forEach(wp => {
-                    let color;
-                    if(relativeCount==0){
-                        color = "green"; //FIRST WAYPOINT OF STEP
-                    }else if(relativeCount == route[drawingStep].waypoints.length-1){
-                        color="blue"; //LAST WAYPOINT OF STEP
-                    }else{
-                        color=defaultWaypointColor; //COMMON WAYPOINT
-                    }
-                    drawWP(wp, !count, color);
-                    count+=1;
-                    relativeCount+=1;
-                });
-                if(routeStep.loop && routeStep.waypoints.length>2) closeLoop(routeStep);
-                drawingStep += 1;
-            });
-
-        }
-    }
+function resetPlaceMarkerButtons(){
+    markers.toPlace = false
+    $(".place-marker").prop('checked', false);
+    $(".place-marker-label").text("Place it");
 }
-
-const defaultWaypointColor = "red";
-
-function getDistance(pt1,pt2){
-    return Math.hypot(pt1.x-pt2.x, pt1.y-pt2.y);
-}
-
-
-let dragged = false;
 
 $(function(){
 
@@ -175,24 +80,10 @@ $(function(){
 
     $("#loop-step-cb").change((e)=>{
         route[currentRouteStep].loop = e.target.checked;
-        redraw();
+        setCanvasPathClosedState(e.target.checked, route[currentRouteStep].waypoints);
     })
 
-    let markers = {
-        a:{
-            placed: false,
-            coords: {},
-            inGameCoords: {},
-            label: "A"
-        },
-        b:{
-            placed: false,
-            coords: {},
-            inGameCoords: {},
-            label: "B"
-        },
-        toPlace: false
-    }
+
     $(".place-marker").change((e) => {
         const checkState = e.target.checked;
         resetPlaceMarkerButtons();
@@ -208,11 +99,6 @@ $(function(){
         }
     })
 
-    function resetPlaceMarkerButtons(){
-        markers.toPlace = false
-        $(".place-marker").prop('checked', false);
-        $(".place-marker-label").text("Place it");
-    }
 
     $(".in-game-coords-input").change((e) => {
         const idSplitted = e.target.id.split('-');
@@ -223,8 +109,6 @@ $(function(){
         }, 100);
         
     })
-
-    
 
     $("#remove-all-btn").click(()=>{
         if(route[currentRouteStep].waypoints.length==0){
@@ -323,12 +207,7 @@ $(function(){
         
     }
 
-    function placeMarker(marker, pt){
-        marker.coords = pt;
-        marker.placed = true;
-        resetPlaceMarkerButtons();
-        redraw();
-    }
+
 
 
 /*
@@ -416,17 +295,6 @@ $(function(){
 
     /*-------------------------------------------------
      * ROUTE MANAGING */
-
-    let currentRouteStep = 0;
-    let viewCompleteRoute = false;
-    let loopRoute = false;
-    let route = [
-        {
-            loop: false,
-            loopQuantity: 0,
-            waypoints: []
-        },
-    ];
     
     function updateManageTable(){
         const tableBody = $("#route-table tbody");
@@ -733,6 +601,12 @@ $(function(){
         array[newIndex] = carrier;
     }
 
+    $("#zoom-in").click(()=>{
+        zoomMap(3, false);
+    });
 
+    $("#zoom-out").click(()=>{
+        zoomMap(-3, false);
+    });
 
 });

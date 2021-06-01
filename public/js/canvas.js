@@ -72,7 +72,7 @@ function drawWpLineTo(pt){
 function startWpLine(pt){
     waypointsLine = new Konva.Line({
         stroke: 'black',
-        strokeWidth: pathLineStrokeWidth,
+        strokeWidth: Math.min(pathLineStrokeWidth, pathLineStrokeWidth/stage.getAbsoluteScale().x ),
         points: [pt.x, pt.y],
     });
     
